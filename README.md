@@ -4,16 +4,22 @@ Estudio Ingeniería de Organización Industrial en la Universidad de Jaén. Trab
 
 ## Proyectos propios
 
-**Aligera · iOS**  
-App para revisar la fototeca y recuperar espacio: compresión de vídeos, conversión de fotos a HEIC y detección visual de duplicados. El procesamiento de fotos y vídeos ocurre en el dispositivo.  
+**Aligera · iOS**
+
+App para revisar la fototeca y recuperar espacio: compresión de vídeos, conversión de fotos a HEIC y detección visual de duplicados. El procesamiento de fotos y vídeos ocurre en el dispositivo.
+
 Swift · SwiftUI · AVFoundation · Vision — Código privado
 
-**Matiza · iOS**  
-Editor fotográfico con ajustes no destructivos y máscaras locales. Combina un motor de pincel en Metal con procesamiento en Core Image y recetas de edición que se pueden guardar.  
+**Matiza · iOS**
+
+Editor fotográfico con ajustes no destructivos y máscaras locales. Combina un motor de pincel en Metal con procesamiento en Core Image y recetas de edición que se pueden guardar.
+
 Swift · Metal · Core Image — Código privado
 
-**BaseSport · Producto y emprendimiento**  
-Cofundador y responsable de desarrollo de producto de una plataforma que conecta clubes deportivos con jugadores.  
+**BaseSport · Producto y emprendimiento**
+
+Cofundador y responsable de desarrollo de producto de una plataforma que conecta clubes deportivos con jugadores.
+
 Código privado
 
 ## Código que puedes explorar
