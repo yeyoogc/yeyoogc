@@ -1,31 +1,30 @@
-## Sergio García Carmona
+# Sergio García Carmona
 
-Estudiante de Ingeniería de Organización Industrial en la Universidad de Jaén. Construyo
-aplicaciones nativas de iOS y automatizaciones. Me interesa el punto donde el software
-deja de ser un prototipo y se convierte en algo que alguien usa a diario.
+Estudio Ingeniería de Organización Industrial en la Universidad de Jaén. Trabajo como **desarrollador y creador digital en Brasa Digital** y soy cofundador de **BaseSport**. Desarrollo aplicaciones para iOS, proyectos web y automatizaciones.
 
-### En lo que trabajo
+## Proyectos propios
 
-**Aligera** — App de iPhone para recuperar espacio
-de almacenamiento. Analiza la fototeca, recomprime vídeos, recodifica fotos a HEIC y
-encuentra duplicados por reconocimiento visual. Todo el procesado ocurre en el dispositivo:
-ningún archivo sale del teléfono. Swift · SwiftUI · AVFoundation · Vision.
+**Aligera · iOS**  
+App para revisar la fototeca y recuperar espacio: compresión de vídeos, conversión de fotos a HEIC y detección visual de duplicados. El procesamiento de fotos y vídeos ocurre en el dispositivo.  
+Swift · SwiftUI · AVFoundation · Vision — Código privado
 
-**Matiza** — Editor fotográfico para iOS, alternativa gratuita a Lightroom Mobile. Motor de
-pincel escrito en Metal puro para máscaras locales pintadas a mano, sobre un pipeline de
-edición no destructivo con receta serializable. Cero dependencias externas.
-Swift · Metal · Core Image.
+**Matiza · iOS**  
+Editor fotográfico con ajustes no destructivos y máscaras locales. Combina un motor de pincel en Metal con procesamiento en Core Image y recetas de edición que se pueden guardar.  
+Swift · Metal · Core Image — Código privado
 
-**BaseSport** — Red social que conecta clubes deportivos modestos con jugadores sin
-visibilidad. Cofundador y responsable de producto. 1.er premio del Hackathon Ciber-Olé,
-Santander Explorer (U. de Jaén) y 2.º premio de economía local del programa EDINT.
+**BaseSport · Producto y emprendimiento**  
+Cofundador y responsable de desarrollo de producto de una plataforma que conecta clubes deportivos con jugadores.  
+Código privado
 
-### Herramientas
+## Código que puedes explorar
 
-Swift, SwiftUI y Metal para iOS. Python para automatización y tratamiento de datos.
-Flutter y TypeScript cuando el proyecto lo pide. Trabajo a diario con agentes de código
-y con n8n para orquestar flujos.
+- **[PairApp](https://github.com/yeyoogc/PairApp-Beta)** — PWA para compartir recuerdos, planes y notas en pareja. React, Vite y Firebase.
+- **[ClaudeProfessor](https://github.com/yeyoogc/claudeprofessor-web)** — Web de recursos en español sobre Claude: guías, prompts y skills. HTML, CSS y JavaScript. **[Visitar la web](https://claudeprofessor.page/)**.
 
-### Contacto
+## Cómo trabajo
 
-[segarciac2007@gmail.com](mailto:segarciac2007@gmail.com) · Fotografía en [@sgc.lens](https://instagram.com/sgc.lens)
+Combino desarrollo de producto y automatización. Utilizo Swift y SwiftUI en iOS, Python y n8n para flujos de trabajo, y Flutter o tecnologías web según el proyecto. Integro agentes de código en el desarrollo.
+
+## Contacto
+
+Jaén, España · **[segarciac2007@gmail.com](mailto:segarciac2007@gmail.com)**
