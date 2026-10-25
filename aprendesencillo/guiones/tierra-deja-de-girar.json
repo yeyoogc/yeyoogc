@@ -1,0 +1,44 @@
+{
+  "id": "tierra-deja-de-girar",
+  "titulo": "¿Y si la Tierra dejara de girar?",
+  "escenas": [
+    {
+      "texto": "Si la Tierra dejara de girar ahora mismo, saldrías disparado a 1.670 kilómetros por hora.",
+      "visual": { "tipo": "contador", "valor": 1670, "unidad": "km/h", "etiqueta": "Velocidad en el ecuador" }
+    },
+    {
+      "texto": "Porque tú, el suelo y el aire vais girando con ella. Si el planeta frena de golpe... tú no.",
+      "visual": { "tipo": "tierra", "modo": "frena" }
+    },
+    {
+      "texto": "Y el aire tampoco: vientos más rápidos que el sonido arrasando ciudades enteras.",
+      "visual": {
+        "tipo": "comparar",
+        "unidad": "km/h",
+        "items": [
+          { "nombre": "Avión comercial", "valor": 900, "icono": "✈️" },
+          { "nombre": "Sonido", "valor": 1235, "icono": "🔊" },
+          { "nombre": "Ese viento", "valor": 1670, "icono": "🌪️" }
+        ]
+      }
+    },
+    {
+      "texto": "¿Y si frenara poco a poco? Los océanos se irían hacia los polos, y en el ecuador asomaría un supercontinente gigante.",
+      "visual": { "tipo": "flecha", "de": { "icono": "🌊", "texto": "Océanos" }, "a": { "icono": "🧊", "texto": "A los polos" } }
+    },
+    {
+      "texto": "Un día duraría un año entero: seis meses de sol, y seis meses de noche.",
+      "visual": { "tipo": "dianoche" }
+    },
+    {
+      "texto": "Ah, y en el ecuador pesarías un poco más: unos 200 gramos si pesas 70 kilos.",
+      "visual": { "tipo": "icono", "icono": "⚖️", "texto": "+200 g", "subtexto": "(si pesas 70 kg)" }
+    },
+    {
+      "texto": "¿Qué pregunta respondo mañana? Déjala en comentarios.",
+      "visual": { "tipo": "icono", "icono": "💬", "texto": "¿Qué pregunta hago mañana?" }
+    }
+  ],
+  "caption": "¿Y si la Tierra dejara de girar? 🌍 Spoiler: no sería un buen día. ¿Qué pregunta hago mañana? 👇",
+  "hashtags": ["#aprendesencillo", "#quepasariasi", "#ciencia", "#curiosidades", "#aprendeentiktok", "#fyp"]
+}
