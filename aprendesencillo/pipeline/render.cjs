@@ -73,6 +73,10 @@ function servidor() {
       await pagina.evaluate(t => window.pintar(t), t);
       await pagina.screenshot({ type: 'jpeg', quality: 85, path: path.join(dir, `${String(i).padStart(2, '0')}.jpg`) });
     }
+    // Copia de cada fotograma suelto (para mirarlos a tamaño real y medirlos en make.py).
+    const sueltos = arg3.replace(/\.jpg$/, '');
+    fs.rmSync(sueltos, { recursive: true, force: true }); fs.mkdirSync(sueltos, { recursive: true });
+    for (const f of fs.readdirSync(dir)) fs.copyFileSync(path.join(dir, f), path.join(sueltos, f));
     const cols = Math.min(5, tiempos.length), filas = Math.ceil(tiempos.length / cols);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '1', '-i', path.join(dir, '%02d.jpg'),
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);

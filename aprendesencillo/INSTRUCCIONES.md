@@ -12,7 +12,7 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 3. **Plano de rodaje antes de programar:** en el propio `guiones/<id>.json` añade `"planos"`, una línea por frase: qué enseña la cámara, qué se mueve y qué anotación aparece. Comprueba que cada frase tiene un cambio visual claro y que hay un "momento" fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan.
 4. **Bucle de crítica** (aquí se gana o se pierde el vídeo):
    1. Saca la previa: `python3 pipeline/make.py guiones/<id>.json --previa` (unos 30 s; la voz queda en caché y no se vuelve a gastar).
-   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`.
+   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto.
    3. Puntúa cada fotograma del 1 al 10 en cuatro cosas:
       - **acabado**: texturas y detalle, nada que parezca de juguete;
       - **composición**: el objeto llena el cuadro y no hay solapes ni nada cortado sin querer;
@@ -42,7 +42,7 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 
 ## Escena (`escenas/<id>.js`)
 
-`export default function crear(ctx) { ... }`. Montas el 3D y programas todo con tiempos sacados de la voz. **Todo debe ser función del tiempo**: nada de `Math.random`, `Date` ni `requestAnimationFrame`; para azar, `ctx.azar(semilla)`.
+`export default function crear(ctx) { ... }`. Montas el 3D y programas todo con tiempos sacados de la voz. El motor usa **three.js r170** (está en `pipeline/motor/vendor/`): usa solo API de esa versión, y si dudas de si existe una clase o propiedad, búscala con `grep` en `vendor/three/three.module.min.js` antes de usarla. **Todo debe ser función del tiempo**: nada de `Math.random`, `Date` ni `requestAnimationFrame`; para azar, `ctx.azar(semilla)`.
 
 **Tiempos**: `f(i)` inicio de la frase i, `fin(i)` su final, `palabra(i, 'texto')` cuándo se dice esa palabra dentro de la frase i (para sincronizar golpes exactos).
 

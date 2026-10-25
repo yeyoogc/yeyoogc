@@ -157,6 +157,21 @@ def construir_timeline(guion, chars, tiempos, total):
     return {"id": guion["id"], "duracion": round(total, 3), "frases": frases, "subs": subs}
 
 
+def medir_previa(carpeta, timeline):
+    """Lo que un vistazo no mide bien: cuánto ocupa lo importante en la zona principal y si el plano está lavado."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    print("  medición (zona principal, y 460-1440): cobertura = parte del cuadro con algo visible")
+    for i, f in enumerate(sorted(carpeta.glob("*.jpg"))):
+        h = Image.open(f).convert("L").crop((0, 460, 1080, 1440)).histogram()
+        total = sum(h)
+        cobertura, media = sum(h[60:]) / total, sum(n * c for n, c in enumerate(h)) / total
+        avisos = (["CASI VACÍO: el objeto ocupa muy poco"] if cobertura < 0.15 else []) + (["MUY CLARO: puede lavar el plano"] if media > 150 else [])
+        print(f"    frase {i:2d}: cobertura {cobertura:4.0%}, brillo {media:3.0f}  {' · '.join(avisos)}  «{timeline['frases'][i]['texto'][:40]}»")
+
+
 def main(ruta_guion, previa):
     guion = json.loads(Path(ruta_guion).read_text(encoding="utf-8"))
     vid = guion["id"]
@@ -178,6 +193,7 @@ def main(ruta_guion, previa):
     render = ["node", str(RAIZ / "pipeline" / "render.cjs"), str(ruta_tl)]
     if previa:
         subprocess.run(render + ["--previa", str(salida / f"{vid}-previa.jpg")], check=True)
+        medir_previa(salida / f"{vid}-previa", timeline)
         return
     mp4 = salida / f"{vid}.mp4"
     subprocess.run(render + [str(audio), str(mp4)], check=True)
