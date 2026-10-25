@@ -11,6 +11,24 @@
     "¿Y en un automático moderno? La centralita *ignora* la orden y no pasa *nada*.",
     "Envíaselo a ese colega que *siempre* ha querido probarlo."
   ],
+  "planos": [
+    "Macro del pomo con el patrón de marchas; cifra 120 km/h arriba; círculo rojo en la R y la palanca se inclina hacia ella.",
+    "La palanca rebota a su sitio; sello NO ENTRA de golpe con temblor.",
+    "La cámara baja por dentro hasta la caja de cambios: engranaje de salida girando, flecha de giro y etiqueta ~4.000 rpm.",
+    "Plano del piñón loco con caja PIÑÓN LOCO y flechas de giro opuestas en el piñón loco y en el intermediario.",
+    "Vista lateral: 0 rpm frente a ~4.000 rpm; fantasma de cristal de dónde tiene que entrar y el piñón avanza hacia él.",
+    "Macro del contacto: tarjeta SINCRONIZADOR ✕; los dientes chocan varias veces con chispas, fogonazo y temblor; etiqueta ¡rasca!",
+    "El diente se pone rojo, se parte y sale volando hacia la cámara; etiqueta diente partido.",
+    "Barrido lateral hasta la centralita (placa con chip TCU); etiqueta 'orden: marcha atrás' y tarjeta R → ignorada.",
+    "La cámara se aleja, la placa queda desenfocada y aparece el móvil con la hoja de compartir; el dedo pulsa Enviar."
+  ],
   "caption": "¿Marcha atrás a 120 km/h? 🚗💥 Ni lo intentes (y aquí está el porqué). ¿Qué pregunta hago mañana? 👇",
-  "hashtags": ["#aprendesencillo", "#coches", "#curiosidades", "#mecanica", "#aprendeentiktok", "#fyp"]
+  "hashtags": [
+    "#aprendesencillo",
+    "#coches",
+    "#curiosidades",
+    "#mecanica",
+    "#aprendeentiktok",
+    "#fyp"
+  ]
 }

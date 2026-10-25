@@ -102,10 +102,10 @@ export default function crear(ctx) {
   dof.apertura = 1.8;
   ui.numero({ texto: '120', unidad: 'km/h', tam: 210, t: 0.05, hasta: f(2), y: 560 });
   ui.circulo({ ancla: marcaR, r: 78, color: '#ff4d5e', t: palabra(0, 'marcha'), hasta: f(1) + 0.4 });
-  tween(palanca.rotation, { z: -0.13, x: 0.12 }, { t: palabra(0, 'metes'), dur: 0.6 });
+  tween(palanca.rotation, { z: -0.13, x: 0.12 }, { t: palabra(0, 'metes'), dur: 0.7, ease: 'muelle' });
   // 1. Spoiler: no entra (la palanca rebota).
   const tno = palabra(1, 'no');
-  tween(palanca.rotation, { z: 0, x: 0 }, { t: tno, dur: 0.45, ease: 'rebote' });
+  tween(palanca.rotation, { z: 0, x: 0 }, { t: tno, dur: 0.8, ease: 'jugueton' });   // rebota al no entrar
   ui.sello('NO ENTRA', { t: tno, hasta: f(2), y: 1320 });
   fx.temblor({ t: tno, dur: 0.35, fuerza: 0.03 });
 
@@ -132,7 +132,7 @@ export default function crear(ctx) {
     tween(m, { opacity: v }, { t: palabra(4, 'encajar'), dur: 0.4 });
     tween(m, { opacity: 0 }, { t: f(5) + 0.2, dur: 0.3 });
   }
-  tween(B.position, { z: 0.5 }, { t: palabra(4, 'encajar'), dur: 1.3 });
+  tween(B.position, { z: 0.5 }, { t: palabra(4, 'encajar'), dur: 1.3, ease: 'pesado' });
 
   // 5. Sin sincronizador: los dientes chocan y rasca. Macro del contacto.
   const tc = palabra(5, 'chocan');

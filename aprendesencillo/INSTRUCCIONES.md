@@ -9,8 +9,17 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es.
 1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`).
 2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 40 s; los tuyos, 1 minuto).
-3. Escribe `guiones/<id>.json` y `escenas/<id>.js`.
-4. Previa (unos 30 s; la voz queda en caché y no se vuelve a gastar): `python3 pipeline/make.py guiones/<id>.json --previa`, y mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) **al lado de la de referencia**. Si la tuya parece más pobre (formas de juguete, objetos pequeños en el cuadro, planos vacíos, nada de textura), mejórala antes de seguir. Corrige también cosas fuera de cuadro, solapes con los subtítulos y frases sin nada nuevo en pantalla. Como mucho 2 rondas.
+3. **Plano de rodaje antes de programar:** en el propio `guiones/<id>.json` añade `"planos"`, una línea por frase: qué enseña la cámara, qué se mueve y qué anotación aparece. Comprueba que cada frase tiene un cambio visual claro y que hay un "momento" fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan.
+4. **Bucle de crítica** (aquí se gana o se pierde el vídeo):
+   1. Saca la previa: `python3 pipeline/make.py guiones/<id>.json --previa` (unos 30 s; la voz queda en caché y no se vuelve a gastar).
+   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`.
+   3. Puntúa cada fotograma del 1 al 10 en cuatro cosas:
+      - **acabado**: texturas y detalle, nada que parezca de juguete;
+      - **composición**: el objeto llena el cuadro y no hay solapes ni nada cortado sin querer;
+      - **claridad**: se entiende la idea de esa frase sin audio;
+      - **legibilidad**: subtítulos y anotaciones se leen bien.
+   4. Escribe los 3 peores problemas, arréglalos y repite.
+   5. Para cuando todo esté en 8 o más, o tras 3 rondas.
 5. Render y envío (unos 30 min para 1 minuto de vídeo): lánzalo **en segundo plano** y espera a que acabe:
    `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4`
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
@@ -41,7 +50,7 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 
 | función | uso |
 |---|---|
-| `tween(obj, {prop: valor}, {t, dur, ease})` | anima números (`mesh.position`, `mesh.rotation`, `material`…). ease: `inOut`, `sale`, `entra`, `rebote`, `lineal` |
+| `tween(obj, {prop: valor}, {t, dur, ease})` | anima números (`mesh.position`, `mesh.rotation`, `material`…). Curvas: `inOut`, `sale`, `entra`, `rebote`, `lineal`. **Muelles** (movimiento con masa; `dur` = lo que tarda en asentarse): `pesado` (objetos 3D grandes, sin pasarse), `muelle` (por defecto, se pasa un pelo), `rapido` (piezas pequeñas, botones), `jugueton` (rebote visible). Usa muelles para casi todo lo que se mueve; si el objetivo cambia varias veces, los muelles se encadenan sin saltos |
 | `color(material.color, 0xff4d5e, {t, dur})` | cambia de color |
 | `cada(t => …)` | lógica continua (giros, parpadeos) |
 | `acumulado(t => velocidad)` | ángulo integrado cuando la velocidad cambia |
@@ -76,6 +85,7 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 | `ui.nota(texto)` | aclaración o fuente pequeña, abajo a la izquierda |
 | `ui.compartir({previa, nombres})` | móvil con la hoja de compartir; el dedo pulsa "Enviar" a los 1,5 s. Úsalo en la frase final |
 | `fx.chispas({ancla, t, dur, n})` / `fx.temblor({t, dur, fuerza})` | impactos |
+| `sonido(tipo, t, {vol, dur})` | efecto de sonido extra: `whoosh`, `pop`, `clic`, `golpe`, `chispas`. Ya suenan solos los movimientos de cámara (whoosh), las anotaciones (pop), los sellos y temblores (golpe), las chispas y el móvil de compartir; añade solo lo que falte (una pieza que encaja: `clic`) |
 
 **Zonas de pantalla**:
 - y 260-430: subtítulos. No pongas nada ahí.

@@ -13,6 +13,35 @@ const RAIZ = path.join(__dirname, '..');
 const TIPOS = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg' };
 const [, , rutaTimeline, arg2, arg3] = process.argv;
 
+// Efectos de sonido sintetizados con ffmpeg (sin archivos de audio de terceros). nivel = volumen bajo la voz.
+const EFECTOS = {
+  whoosh: { nivel: 0.9, gen: d => ['-f', 'lavfi', '-i', `anoisesrc=d=${d}:c=pink:a=0.6`, '-af', `highpass=f=250,lowpass=f=3200,afade=t=in:st=0:d=${(d * 0.45).toFixed(2)},afade=t=out:st=${(d * 0.45).toFixed(2)}:d=${(d * 0.55).toFixed(2)}`] },
+  pop: { nivel: 0.25, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.7*sin(2*PI*(480+900*exp(-25*t))*t)*exp(-22*t)':d=0.18"] },
+  clic: { nivel: 0.35, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.8*(random(0)*2-1)*exp(-250*t)+0.4*sin(2*PI*3000*t)*exp(-120*t)':d=0.05", '-af', 'highpass=f=1500'] },
+  golpe: { nivel: 0.45, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.9*sin(2*PI*(48+90*exp(-18*t))*t)*exp(-5*t)+0.35*(random(0)*2-1)*exp(-28*t)':d=0.7", '-af', 'lowpass=f=4000'] },
+  chispas: { nivel: 0.3, gen: d => ['-f', 'lavfi', '-i', `aevalsrc='0.9*(random(0)*2-1)*gt(random(1),0.996)':d=${d}`, '-af', `highpass=f=1800,lowpass=f=9000,afade=t=out:st=${Math.max(0, d - 0.3).toFixed(2)}:d=0.3`] },
+};
+
+function mezclarSonido(eventos, voz, destino, dir) {
+  const archivos = {}, entradas = ['-i', voz], filtros = [];
+  eventos.filter(e => EFECTOS[e.tipo]).slice(0, 90).forEach((e, i) => {
+    const d = Math.max(0.2, Math.round((e.dur || 0.8) * 10) / 10), clave = `${e.tipo}-${d}`;
+    if (!archivos[clave]) {
+      archivos[clave] = path.join(dir, `${clave}.wav`);
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...EFECTOS[e.tipo].gen(d), '-ar', '48000', '-ac', '1', archivos[clave]]);
+    }
+    entradas.push('-i', archivos[clave]);
+    const ms = Math.round(e.t * 1000);
+    filtros.push(`[${i + 1}]adelay=${ms}|${ms},volume=${(EFECTOS[e.tipo].nivel * (e.vol ?? 1)).toFixed(3)}[s${i}]`);
+  });
+  if (!filtros.length) return voz;
+  const n = filtros.length;
+  filtros.push(`[0]${Array.from({ length: n }, (_, i) => `[s${i}]`).join('')}amix=inputs=${n + 1}:normalize=0:duration=first,alimiter=limit=0.95[a]`);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...entradas, '-filter_complex', filtros.join(';'), '-map', '[a]', '-ar', '48000', destino]);
+  console.log(`  sonido: ${n} efectos mezclados con la voz`);
+  return destino;
+}
+
 function servidor() {
   return new Promise(ok => {
     const srv = http.createServer((pet, res) => {
@@ -49,10 +78,12 @@ function servidor() {
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
   } else {
+    const dirSonido = fs.mkdtempSync(path.join(os.tmpdir(), 'sonido-'));
+    const audio = mezclarSonido(await pagina.evaluate(() => window.sonidos()), arg2, path.join(dirSonido, 'mezcla.wav'), dirSonido);
     const ffmpeg = spawn('ffmpeg', [
       '-y', '-loglevel', 'error',
       '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
-      '-i', arg2, '-map', '0:v', '-map', '1:a',
+      '-i', audio, '-map', '0:v', '-map', '1:a',
       '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(FPS),
       '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', arg3,
     ], { stdio: ['pipe', 'inherit', 'inherit'] });

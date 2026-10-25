@@ -22,7 +22,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
 
 let D, renderer, escena, camara, post, sol;
-const tweens = [], grupos = [], cada = [], overlays = [], emisores = [], temblores = [];
+const tweens = [], grupos = [], cada = [], overlays = [], emisores = [], temblores = [], sonidos = [];
 const camPos = new THREE.Vector3(0, 0, 8), camMira = new THREE.Vector3(), camFov = { v: 35 };
 const brillo = { r: 255, g: 170, b: 60, a: 0.2 };
 // Profundidad de campo: foco 0 = automático (enfoca el punto al que mira la cámara). fondo: desenfoque del fondo (0-1).
@@ -32,8 +32,20 @@ const tmp = new THREE.Vector3();
 // ---------- tiempo ----------
 const finDeFrase = t => (D.frases.find(f => t >= f.inicio && t < f.fin) || D.frases[D.frases.length - 1]).fin;
 
+// Muelles en forma cerrada (siguen siendo función pura de t). dur = lo que tarda en asentarse; el número es el
+// amortiguamiento: <1 se pasa un pelo y vuelve, 1 llega sin pasarse.
+const MUELLES = { rapido: 0.75, muelle: 0.85, pesado: 1, jugueton: 0.5 };
+function muelle(s, w, z) {
+  if (s <= 0) return 0;
+  if (z >= 1) return 1 - Math.exp(-w * s) * (1 + w * s);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * s) * (Math.cos(wd * s) + (z * w / wd) * Math.sin(wd * s));
+}
+
 function tween(obj, props, { t, dur = 0.8, ease = 'inOut' } = {}) {
-  for (const k in props) tweens.push({ obj, k, to: props[k], t0: t, dur: Math.max(0.001, dur), ease: EASE[ease] || EASE.inOut });
+  dur = Math.max(0.001, dur);
+  const z = MUELLES[ease];
+  for (const k in props) tweens.push({ obj, k, to: props[k], t0: t, dur, ease: EASE[ease] || EASE.inOut, muelle: z && { z, w: 4.6 / (z * dur) } });
 }
 
 function agruparTweens() {
@@ -55,7 +67,12 @@ function agruparTweens() {
 function aplicarTweens(t) {
   for (const g of grupos) {
     let v = g.inicial;
-    for (const tw of g.lista) { if (t < tw.t0) break; v = lerp(tw.from, tw.to, tw.ease(clamp((t - tw.t0) / tw.dur))); }
+    for (const tw of g.lista) {
+      if (t < tw.t0) break;
+      // Un muelle por cada cambio de objetivo, sumados: si el objetivo cambia a mitad, el movimiento sigue siendo continuo.
+      if (tw.muelle) v += (tw.to - tw.from) * muelle(t - tw.t0, tw.muelle.w, tw.muelle.z);
+      else v = lerp(tw.from, tw.to, tw.ease(clamp((t - tw.t0) / tw.dur)));
+    }
     g.obj[g.k] = v;
   }
 }
@@ -81,8 +98,14 @@ function overlay(html, cls, o = {}) {
   const t = o.t ?? 0;
   const ov = { el, t, hasta: o.hasta ?? finDeFrase(t), ancla: o.ancla, offset: o.offset && new THREE.Vector3(...o.offset), x: o.x ?? W / 2, y: o.y ?? H / 2,
                origen: o.origen || '-50%, -50%', entrada: o.entrada || 'escala', actualizar: o.actualizar, fijo: o.fijo };
-  overlays.push(ov); return ov;
+  overlays.push(ov);
+  const efecto = { etiqueta: 'pop', caja: 'pop', circulo: 'pop', giro: 'pop', tarjeta: 'pop', numero: 'pop', texto: 'pop', flecha: 'pop', sello: 'golpe' }[cls];
+  if (efecto) sonido(efecto, t);
+  return ov;
 }
+
+// Diseño de sonido: cada evento se sintetiza y se mezcla con la voz en render.cjs.
+function sonido(tipo, t, { vol = 1, dur } = {}) { if (t != null) sonidos.push({ tipo, t: Math.max(0, t), vol, ...(dur ? { dur } : {}) }); }
 
 function pintarOverlays(T) {
   for (const o of overlays) {
@@ -165,6 +188,7 @@ const ui = {
       <div class="gente">${nombres.map((n, i) => `<div class="persona${i === 1 ? ' sel' : ''}"><div class="cara emoji">${caras[i % caras.length]}</div>${esc(n)}</div>`).join('')}</div>
       <div class="enviar">Enviar</div></div></div><div class="dedo emoji">👆</div>`, '', { y: 1180, ...o });
     const dedo = ov.el.querySelector('.dedo'), elegida = ov.el.querySelector('.persona.sel'), boton = ov.el.querySelector('.enviar');
+    sonido('pop', ov.t); sonido('clic', ov.t + 0.85); sonido('clic', ov.t + 1.45);
     ov.actualizar = T => {
       const k = T - ov.t;
       const ruta = k < 0.8 ? [[420, 900], [330, 560], EASE.inOut(clamp(k / 0.8))] : [[330, 560], [280, 690], EASE.inOut(clamp((k - 0.9) / 0.5))];
@@ -183,8 +207,9 @@ const fx = {
     const r = azar(semilla), p = [];
     for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (r() - 0.5) * Math.PI * 1.6, v = 500 + r() * 900; p.push({ nace: t + dur * r(), vx: Math.cos(a) * v, vy: Math.sin(a) * v, vida: 0.35 + r() * 0.35 }); }
     emisores.push({ ancla, offset: offset && new THREE.Vector3(...offset), x, y, p, color });
+    sonido('chispas', t, { dur: dur + 0.4, vol: Math.min(1, n / 120) });
   },
-  temblor({ t, dur = 0.4, fuerza = 0.05 }) { temblores.push({ t, dur, fuerza }); },
+  temblor({ t, dur = 0.4, fuerza = 0.05 }) { temblores.push({ t, dur, fuerza }); if (fuerza >= 0.04) sonido('golpe', t, { vol: 0.8 }); },
 };
 
 function pintarFx(T) {
@@ -278,7 +303,7 @@ window.iniciar = async datos => {
     f: i => D.frases[i].inicio,
     fin: i => D.frases[i].fin,
     palabra: (i, texto) => { const p = D.frases[i].palabras.find(p => norm(p.w).startsWith(norm(texto))); return p ? p.t : D.frases[i].inicio; },
-    tween, cada: fn => cada.push(fn), acumulado, azar, EASE, mat, geo, ui, fx, bordes, halo, dof, sol, sombras,
+    tween, cada: fn => cada.push(fn), acumulado, azar, EASE, mat, geo, ui, fx, bordes, halo, dof, sol, sombras, sonido,
     color: (c, hex, o) => { const k = new THREE.Color(hex); tween(c, { r: k.r, g: k.g, b: k.b }, o); },
     suelo: ({ y = -1, opacidad = 0.4, tam = 40 } = {}) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(tam, tam), new THREE.ShadowMaterial({ opacity: opacidad }));
@@ -286,7 +311,10 @@ window.iniciar = async datos => {
     },
     camara: {
       poner: ({ pos, mira = [0, 0, 0], fov = 35 }) => { camPos.set(...pos); camMira.set(...mira); camFov.v = fov; },
-      ir: ({ pos, mira, fov }, o) => { if (pos) tween(camPos, { x: pos[0], y: pos[1], z: pos[2] }, o); if (mira) tween(camMira, { x: mira[0], y: mira[1], z: mira[2] }, o); if (fov) tween(camFov, { v: fov }, o); },
+      ir: ({ pos, mira, fov }, o) => {
+        if (pos) tween(camPos, { x: pos[0], y: pos[1], z: pos[2] }, o); if (mira) tween(camMira, { x: mira[0], y: mira[1], z: mira[2] }, o); if (fov) tween(camFov, { v: fov }, o);
+        if ((o?.dur ?? 0.8) >= 0.6 && (o?.t ?? 0) > 0.2 && o?.ease !== 'lineal') sonido('whoosh', o.t, { dur: Math.min(o.dur ?? 0.8, 1.4) });
+      },
     },
     fondo: {
       brillo: (hex, o = {}) => { const k = new THREE.Color(hex); tween(brillo, { r: k.r * 255, g: k.g * 255, b: k.b * 255, ...(o.a != null ? { a: o.a } : {}) }, o); },
@@ -313,5 +341,11 @@ window.pintar = T => {
   pintarFondo(T);
   post.render({ foco: dof.foco > 0 ? dof.foco : camPos.distanceTo(camMira), apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion });
   pintarOverlays(T); pintarFx(T); pintarSubs(T);
+};
+// Lista de efectos de sonido sin duplicados (dos del mismo tipo a menos de 0,15 s cuentan como uno).
+window.sonidos = () => {
+  const lista = [...sonidos].sort((a, b) => a.t - b.t), fuera = [];
+  for (const s of lista) if (!fuera.some(o => o.tipo === s.tipo && Math.abs(o.t - s.t) < 0.15)) fuera.push(s);
+  return fuera.filter(s => s.t < D.duracion);
 };
 window.motorListo = true;
