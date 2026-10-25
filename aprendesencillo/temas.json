@@ -1,7 +1,8 @@
 {
-  "inicio": "2026-10-26",
+  "inicio": "2026-10-25",
   "por_dia": 2,
   "temas": [
+    { "id": "marcha-atras-120", "pregunta": "¿Qué pasa si metes la marcha atrás a 120 km/h?", "pista": "Ya está hecho (guiones/ y escenas/marcha-atras-120): fue el primer vídeo del canal." },
     { "id": "espacio-sin-traje", "pregunta": "¿Qué te pasa en el espacio sin traje?", "pista": "No explotas ni te congelas al instante. Pierdes la consciencia en unos 10-15 s por falta de oxígeno; la piel se hincha; con rescate rápido se sobrevive 1-2 minutos. Contener la respiración dañaría los pulmones." },
     { "id": "tunel-atraviesa-tierra", "pregunta": "¿Y si cavaras un túnel que atravesara la Tierra y saltaras?", "pista": "Sin aire ni rozamiento llegarías al otro lado en unos 38-42 minutos y volverías, oscilando como un péndulo. El núcleo está a más de 5.000 °C." },
     { "id": "pulpo-tres-corazones", "pregunta": "¿Por qué el pulpo tiene tres corazones?", "pista": "Dos bombean sangre a las branquias y uno al resto del cuerpo. Su sangre es azul (hemocianina, con cobre). Unos dos tercios de sus neuronas están en los brazos." },
