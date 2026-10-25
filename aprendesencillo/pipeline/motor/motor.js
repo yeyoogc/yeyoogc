@@ -203,22 +203,22 @@ function pintarFx(T) {
 // ---------- fondo: un shader a pantalla completa (sin subir texturas cada fotograma, que en WebGL por software es carísimo) ----------
 const N_BOKEH = 9;
 const bokeh = (() => { const r = azar(21), c = [[46, 230, 240], [79, 125, 255], [164, 107, 255], [255, 155, 61], [255, 95, 162]];
-  return Array.from({ length: N_BOKEH }, (_, i) => ({ x: r() * W, y: 300 + r() * 1300, r: 70 + r() * 150, c: c[i % c.length], a: 0.05 + r() * 0.07, f: r() * 6.3 })); })();
+  return Array.from({ length: N_BOKEH }, (_, i) => ({ x: r() * W, y: 300 + r() * 1300, r: 70 + r() * 150, c: c[i % c.length], a: 0.07 + r() * 0.08, f: r() * 6.3 })); })();
 const fondoMat = new THREE.ShaderMaterial({
   uniforms: { brillo: { value: new THREE.Vector4(1, 0.67, 0.24, 0.2) }, bPos: { value: bokeh.map(() => new THREE.Vector4()) }, bCol: { value: bokeh.map(b => new THREE.Vector3(...b.c.map(v => v / 255))) } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 1.0, 1.0); }',
   fragmentShader: `uniform vec4 brillo; uniform vec4 bPos[${N_BOKEH}]; uniform vec3 bCol[${N_BOKEH}]; varying vec2 vUv;
-    vec3 lin(vec3 c){ return pow(c, vec3(2.2)); }
+    // Se mezcla en sRGB, como un canvas normal, y se pasa a lineal al final (si no, el tono ACES lo satura todo).
     void main(){
-      vec2 q = vec2(vUv.x * ${W}.0, (1.0 - vUv.y) * ${H}.0);
-      vec3 base = lin(vec3(0.027, 0.031, 0.047)), col = base;
+      vec2 q = vec2(vUv.x * 1080.0, (1.0 - vUv.y) * 1920.0);
+      vec3 base = vec3(0.027, 0.031, 0.047), col = base;
       float dg = length(q - vec2(540.0, 1020.0)) / 980.0;
-      col += lin(brillo.rgb) * brillo.a * (dg < 0.35 ? mix(1.0, 0.35, dg / 0.35) : 0.35 * (1.0 - clamp((dg - 0.35) / 0.65, 0.0, 1.0)));
-      for (int i = 0; i < ${N_BOKEH}; i++) { float d = length(q - bPos[i].xy) / bPos[i].z; col += lin(bCol[i]) * bPos[i].w * (1.0 - smoothstep(0.55, 1.0, d)); }
+      col = mix(col, brillo.rgb, 1.6 * brillo.a * (dg < 0.35 ? mix(1.0, 0.35, dg / 0.35) : 0.35 * (1.0 - clamp((dg - 0.35) / 0.65, 0.0, 1.0))));
+      for (int i = 0; i < 9; i++) { float d = length(q - bPos[i].xy) / bPos[i].z; col = mix(col, bCol[i], bPos[i].w * (1.0 - smoothstep(0.55, 1.0, d))); }
       vec2 g = abs(mod(q - vec2(540.0, 960.0) + 45.0, 90.0) - 45.0);
       col = mix(col, vec3(1.0), 0.03 * (1.0 - smoothstep(0.4, 1.4, min(g.x, g.y))));
       col = mix(col, base, 0.92 * smoothstep(300.0, 1150.0, length(q - vec2(540.0, 960.0))));
-      gl_FragColor = vec4(col, 1.0);
+      gl_FragColor = vec4(pow(col, vec3(2.2)), 1.0);
     }`,
   depthTest: false, depthWrite: false,
 });
