@@ -42,7 +42,14 @@ elif len(sys.argv) < 2:
 else:
     for mp4 in map(Path, sys.argv[1:]):
         texto = mp4.with_suffix(".txt").read_text(encoding="utf-8")[:1024]
-        curl("sendVideo", "--form-string", f"caption={texto}", "--form-string", "supports_streaming=true", "-F", f"video=@{mp4}")
-        print(f"Enviado {mp4.name}")
+        # Sin medidas ni miniatura, Telegram a veces enseña el vídeo achatado (como si fuera 4:3 o cuadrado).
+        info = json.loads(subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:format=duration", "-of", "json", str(mp4)]))
+        ancho, alto, dur = info["streams"][0]["width"], info["streams"][0]["height"], round(float(info["format"]["duration"]))
+        mini = mp4.with_suffix(".mini.jpg")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "1", "-i", str(mp4), "-frames:v", "1", "-vf", "scale=180:320", "-q:v", "5", str(mini)], check=True)
+        curl("sendVideo", "--form-string", f"caption={texto}", "--form-string", "supports_streaming=true",
+             "--form-string", f"width={ancho}", "--form-string", f"height={alto}", "--form-string", f"duration={dur}",
+             "--form-string", "thumbnail=attach://mini", "-F", f"mini=@{mini}", "-F", f"video=@{mp4}")   # la API exige attach:// para la miniatura
+        print(f"Enviado {mp4.name} ({ancho}x{alto}, {dur} s)")
 if not chat_fijo:
     curl("sendMessage", "--form-string", f"text=Para que te lleguen siempre (y no solo si me has escrito en las últimas 24 h), añade esta variable al entorno:\n\nTELEGRAM_CHAT_ID={chat}")
