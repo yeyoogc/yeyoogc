@@ -21,8 +21,9 @@ import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-VOZ_ELEVEN = "8UbiFq3k6A8UHMAoH2qK"   # Alexis: español de España, cercano y claro
+VOZ_ELEVEN = "6xftrpatV0jGmFHxDjUv"   # Martin Osborne (biblioteca de ElevenLabs): español de España, maduro y pulido
 MODELO_ELEVEN = "eleven_multilingual_v2"
+VELOCIDAD = 1.2   # Martin Osborne es pausado; 1,2 es el máximo que admite ElevenLabs
 VOZ_EDGE = "es-ES-AlvaroNeural"
 COLA = 0.8    # margen final (s)
 PUNTUACION_FINAL = tuple(",.;:?!…")
@@ -59,7 +60,7 @@ def tokens(frase):
 def voz_elevenlabs(texto, destino):
     """Devuelve (caracteres, tiempo de inicio de cada carácter) usando el endpoint con marcas de tiempo."""
     cuerpo = {"text": texto, "model_id": MODELO_ELEVEN,
-              "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.15, "use_speaker_boost": True, "speed": 1.05}}
+              "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.15, "use_speaker_boost": True, "speed": VELOCIDAD}}
     pet = urllib.request.Request(
         f"https://api.elevenlabs.io/v1/text-to-speech/{VOZ_ELEVEN}/with-timestamps?output_format=mp3_44100_128",
         data=json.dumps(cuerpo).encode(), headers={"xi-api-key": os.environ["ELEVENLABS_API_KEY"], "Content-Type": "application/json"})
@@ -99,7 +100,7 @@ async def voz_edge(texto, destino):
 def sintetizar(texto, cache):
     """Voz con caché por contenido: (ruta mp3, caracteres alineados, tiempos)."""
     motor = "eleven" if os.environ.get("ELEVENLABS_API_KEY") else "edge"
-    clave = hashlib.sha1(f"{motor}|{VOZ_ELEVEN}|{MODELO_ELEVEN}|{VOZ_EDGE}|{texto}".encode()).hexdigest()[:16]
+    clave = hashlib.sha1(f"{motor}|{VOZ_ELEVEN}|{MODELO_ELEVEN}|{VELOCIDAD}|{VOZ_EDGE}|{texto}".encode()).hexdigest()[:16]
     mp3, meta = cache / f"{clave}.mp3", cache / f"{clave}.json"
     nueva = not (mp3.exists() and meta.exists())
     if nueva:
