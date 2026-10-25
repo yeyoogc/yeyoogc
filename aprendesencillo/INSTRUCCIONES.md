@@ -6,7 +6,7 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 
 ## Pasos
 
-0. Comprueba que existen `ELEVENLABS_API_KEY`, `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo.
+0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es.
 1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`).
 2. Lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo de referencia del estilo, del nivel de detalle y de la API (ese dura 40 s; los tuyos, 1 minuto).
 3. Escribe `guiones/<id>.json` y `escenas/<id>.js`.
