@@ -1,31 +1,35 @@
 # Sesión programada de @aprendesencillo
 
-Objetivo: dejar en el Telegram de Yeyo los 2 TikToks de hoy, listos para publicar. Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del objeto o del concepto que cambia en cada frase, con anotaciones precisas y subtítulos arriba. No explores el repo: lee solo lo que se indica aquí.
+Hay dos sesiones al día: **turno 0** (mañana) y **turno 1** (tarde). El mensaje que te lanza dice cuál eres. Cada una deja en el Telegram de Yeyo **un** TikTok de 1 minuto, listo para publicar en la hora punta siguiente.
+
+Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del objeto o del concepto que cambia en cada frase, con anotaciones precisas y subtítulos arriba. No explores el repo: lee solo lo que se indica aquí.
 
 ## Pasos
 
-1. `cd aprendesencillo && python3 pipeline/siguiente.py` → temas de hoy (`id | pregunta | pista`).
-2. Lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo de referencia del estilo, del nivel de detalle y de la API.
-3. Para cada tema escribe `guiones/<id>.json` y `escenas/<id>.js` (los dos temas en la misma respuesta).
-4. Previa (unos 20 s, no gasta voz si ya está en caché): `python3 pipeline/make.py guiones/<id>.json --previa`, y mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase). Corrige lo que se vea mal: cosas fuera de cuadro, solapes con los subtítulos, frases sin nada nuevo en pantalla. Como mucho 2 rondas por vídeo.
-5. Render y envío en un solo comando (unos 15 min por vídeo; lánzalo en segundo plano y espera a que acabe):
-   `python3 pipeline/make.py guiones/<id1>.json && python3 pipeline/make.py guiones/<id2>.json && python3 pipeline/enviar.py out/<id1>.mp4 out/<id2>.mp4`
+0. Comprueba que existen `ELEVENLABS_API_KEY`, `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo.
+1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`).
+2. Lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo de referencia del estilo, del nivel de detalle y de la API (ese dura 40 s; los tuyos, 1 minuto).
+3. Escribe `guiones/<id>.json` y `escenas/<id>.js`.
+4. Previa (unos 30 s; la voz queda en caché y no se vuelve a gastar): `python3 pipeline/make.py guiones/<id>.json --previa`, y mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase). Corrige lo que se vea mal: cosas fuera de cuadro, solapes con los subtítulos, frases sin nada nuevo en pantalla, planos lavados o vacíos. Como mucho 2 rondas.
+5. Render y envío (unos 30 min para 1 minuto de vídeo): lánzalo **en segundo plano** y espera a que acabe:
+   `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4`
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
 
-No hagas commits ni push: el tema sale de la fecha y no hay estado que guardar.
+No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guardar.
 
 ## Guion (`guiones/<id>.json`)
 
-`{ "id", "frases": [...], "caption", "hashtags" }`. Fórmula de las referencias:
+`{ "id", "frases": [...], "caption", "hashtags" }`. Temas curiosos explicados como en las referencias:
 
 - **Gancho** (frase 1): una pregunta que parece tonta o una creencia común. Frase 2: giro inmediato ("No, no está roto.", "Spoiler: no entra.").
 - **Explicación paso a paso**: una idea por frase, como máximo 14 palabras. Cada frase es un cambio en pantalla.
+- **Un segundo giro a mitad** (un dato que nadie espera, o "y aquí viene lo bueno") para que no se vayan antes del final.
 - **Remate**: la conclusión en una frase redonda ("Así que sí, está suelto, pero a propósito.").
 - **Cierre para compartir**: "Envíaselo a ese amigo que…" con algo concreto y gracioso. Varía la fórmula.
-- 8-10 frases, 30-40 s, español de España, tono de colega.
+- **Duración**: 55-65 s, que con esta voz son 130-150 palabras en 14-17 frases. Español de España, tono de colega.
 - Marca con `*asteriscos*` las palabras clave: salen en blanco y en negrita; el resto, en gris.
 - Escribe los números con cifras ("120", "4.000 rpm").
-- Datos: solo lo bien establecido, partiendo de la `pista`. Si dudas de una cifra, quítala o confírmala con UNA búsqueda web. Nunca inventes estudios, récords ni porcentajes. Nada de consejos médicos o financieros, ni política.
+- **Datos**: solo lo bien establecido, partiendo de la `pista`. Para completar el minuto puedes hacer hasta 3 búsquedas web y confirmar cada cifra que añadas. Si dudas de algo, quítalo. Nunca inventes estudios, récords ni porcentajes. Nada de consejos médicos o financieros, ni política.
 
 ## Escena (`escenas/<id>.js`)
 
