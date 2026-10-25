@@ -3,7 +3,8 @@
 // Regla de oro: todo es función de t. Nada de requestAnimationFrame ni relojes.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { crearPost } from './post.js';
+import { mat, geo, bordes, halo, azar } from './materiales.js';
 
 const W = 1080, H = 1920;
 const $ = id => document.getElementById(id);
@@ -14,19 +15,18 @@ const EASE = {
   entra: p => p * p * p,
   sale: p => 1 - Math.pow(1 - p, 3),
   inOut: p => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+  suave: p => p * p * (3 - 2 * p),
   rebote: p => { const c = 1.70158; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); },
 };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
-function azar(semilla = 1) {
-  return () => { semilla |= 0; semilla = (semilla + 0x6d2b79f5) | 0; let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
 
-let D, renderer, escena, camara;
+let D, renderer, escena, camara, post, sol;
 const tweens = [], grupos = [], cada = [], overlays = [], emisores = [], temblores = [];
 const camPos = new THREE.Vector3(0, 0, 8), camMira = new THREE.Vector3(), camFov = { v: 35 };
 const brillo = { r: 255, g: 170, b: 60, a: 0.2 };
+// Profundidad de campo: foco 0 = automático (enfoca el punto al que mira la cámara). fondo: desenfoque del fondo (0-1).
+const dof = { apertura: 1.3, foco: 0, fondo: 0, exposicion: 1 };
 const tmp = new THREE.Vector3();
 
 // ---------- tiempo ----------
@@ -67,60 +67,6 @@ function acumulado(vel, paso = 1 / 240) {
   return t => { const x = clamp(t / paso, 0, n - 1), i = Math.floor(x); return lerp(tabla[i], tabla[Math.min(i + 1, n - 1)], x - i); };
 }
 
-// ---------- 3D ----------
-function texturaMadera() {
-  const c = document.createElement('canvas'); c.width = 512; c.height = 512;
-  const g = c.getContext('2d'), r = azar(11);
-  g.fillStyle = '#d9b07a'; g.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 90; i++) {
-    g.strokeStyle = `rgba(${120 + r() * 40},${70 + r() * 30},${30 + r() * 20},${0.15 + r() * 0.25})`; g.lineWidth = 1 + r() * 4;
-    g.beginPath(); const y = r() * 512; g.moveTo(0, y);
-    for (let x = 0; x <= 512; x += 32) g.lineTo(x, y + Math.sin(x / 70 + i) * 6 + (r() - 0.5) * 4);
-    g.stroke();
-  }
-  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; return tx;
-}
-
-const mat = {
-  metal: (color = 0xb9bec7, rugosidad = 0.3) => new THREE.MeshStandardMaterial({ color, metalness: 1, roughness: rugosidad }),
-  oro: () => new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1, roughness: 0.25 }),
-  plastico: (color = 0x222222, rugosidad = 0.5) => new THREE.MeshStandardMaterial({ color, metalness: 0, roughness: rugosidad }),
-  vidrio: (color = 0x9fe8ff, opacidad = 0.22) => new THREE.MeshStandardMaterial({ color, metalness: 0.1, roughness: 0.05, transparent: true, opacity: opacidad, depthWrite: false, side: THREE.DoubleSide }),
-  emisivo: (color = 0x2ee6f0, intensidad = 1.4) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensidad }),
-  madera: () => new THREE.MeshStandardMaterial({ map: texturaMadera(), roughness: 0.7 }),
-  hormigon: () => new THREE.MeshStandardMaterial({ color: 0x9a9da3, roughness: 0.95 }),
-};
-
-const geo = {
-  caja: (w, h, d, radio = 0.04) => new RoundedBoxGeometry(w, h, d, 4, radio),
-  // Engranaje recto. Con el mismo radio/dientes en dos ruedas, engranan a distancia rA + rB - (2,5·r/n).
-  engranaje(dientes, radio, grosor = 0.3, { agujero = 0.22, aligerado = 0, sinDiente = -1 } = {}) {
-    const forma = new THREE.Shape(), paso = (Math.PI * 2) / dientes, h = (2.5 * radio) / dientes, rb = radio - h;
-    for (let k = 0; k < dientes; k++) {
-      const a = k * paso, pts = k === sinDiente
-        ? [[rb, a], [rb, a + paso]]
-        : [[rb, a], [radio, a + 0.18 * paso], [radio, a + 0.42 * paso], [rb, a + 0.6 * paso], [rb, a + paso]];
-      pts.forEach(([r, ang], i) => (k === 0 && i === 0 ? forma.moveTo : forma.lineTo).call(forma, r * Math.cos(ang), r * Math.sin(ang)));
-    }
-    const hueco = (x, y, r) => { const p = new THREE.Path(); p.absarc(x, y, r, 0, Math.PI * 2, true); forma.holes.push(p); };
-    hueco(0, 0, radio * agujero);
-    for (let i = 0; i < aligerado; i++) { const a = (i / aligerado) * Math.PI * 2; hueco(Math.cos(a) * radio * 0.58, Math.sin(a) * radio * 0.58, radio * 0.13); }
-    const g = new THREE.ExtrudeGeometry(forma, { depth: grosor, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 2, curveSegments: 24 });
-    g.translate(0, 0, -grosor / 2); return g;
-  },
-  // Un diente suelto, colocado donde iría el diente k de engranaje(dientes, radio).
-  diente(dientes, radio, grosor = 0.3, k = 0) {
-    const paso = (Math.PI * 2) / dientes, h = (2.5 * radio) / dientes, rb = radio - h * 1.05, a = k * paso, forma = new THREE.Shape();
-    [[rb, a], [radio, a + 0.18 * paso], [radio, a + 0.42 * paso], [rb, a + 0.6 * paso]]
-      .forEach(([r, ang], i) => (i ? forma.lineTo : forma.moveTo).call(forma, r * Math.cos(ang), r * Math.sin(ang)));
-    const g = new THREE.ExtrudeGeometry(forma, { depth: grosor, bevelEnabled: false }); g.translate(0, 0, -grosor / 2); return g;
-  },
-  textura(dibujar, w = 512, h = 512) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h; dibujar(c.getContext('2d'), w, h);
-    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
-  },
-};
-
 // ---------- anotaciones (HTML encima del 3D) ----------
 function proyectar(ancla, offset) {
   if (Array.isArray(ancla)) tmp.set(ancla[0], ancla[1], ancla[2]); else ancla.getWorldPosition(tmp);
@@ -144,6 +90,7 @@ function pintarOverlays(T) {
     o.el.style.display = '';
     const pa = clamp((T - o.t) / 0.3), op = Math.min(EASE.sale(pa), clamp((o.hasta - T) / 0.25));
     o.el.style.opacity = op;
+    o.el.style.filter = pa < 1 ? `blur(${(1 - pa) * 7}px)` : '';
     if (o.fijo) { o.actualizar?.(T, pa); continue; }
     const [px, py] = o.ancla ? proyectar(o.ancla, o.offset) : [o.x, o.y];
     const s = o.entrada === 'escala' ? 0.85 + 0.15 * EASE.rebote(pa) : o.entrada === 'golpe' ? 1.6 - 0.6 * EASE.sale(clamp((T - o.t) / 0.18)) : 1;
@@ -241,7 +188,7 @@ const fx = {
 };
 
 function pintarFx(T) {
-  const g = $('fx').getContext('2d'); g.clearRect(0, 0, W, H); g.lineCap = 'round';
+  const g = $('fx').getContext('2d'); g.clearRect(0, 0, W, H); g.lineCap = 'round'; pintarMotas(g, T);
   for (const e of emisores) {
     const [ox, oy] = e.ancla ? proyectar(e.ancla, e.offset) : [e.x, e.y];
     for (const q of e.p) {
@@ -253,16 +200,38 @@ function pintarFx(T) {
   }
 }
 
-// ---------- fondo ----------
-const motas = (() => { const r = azar(7); return Array.from({ length: 90 }, () => ({ x: r() * W, y: r() * H, r: 0.6 + r() * 2, v: 3 + r() * 10, f: r() * 6.3 })); })();
+// ---------- fondo: un shader a pantalla completa (sin subir texturas cada fotograma, que en WebGL por software es carísimo) ----------
+const N_BOKEH = 9;
+const bokeh = (() => { const r = azar(21), c = [[46, 230, 240], [79, 125, 255], [164, 107, 255], [255, 155, 61], [255, 95, 162]];
+  return Array.from({ length: N_BOKEH }, (_, i) => ({ x: r() * W, y: 300 + r() * 1300, r: 70 + r() * 150, c: c[i % c.length], a: 0.05 + r() * 0.07, f: r() * 6.3 })); })();
+const fondoMat = new THREE.ShaderMaterial({
+  uniforms: { brillo: { value: new THREE.Vector4(1, 0.67, 0.24, 0.2) }, bPos: { value: bokeh.map(() => new THREE.Vector4()) }, bCol: { value: bokeh.map(b => new THREE.Vector3(...b.c.map(v => v / 255))) } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 1.0, 1.0); }',
+  fragmentShader: `uniform vec4 brillo; uniform vec4 bPos[${N_BOKEH}]; uniform vec3 bCol[${N_BOKEH}]; varying vec2 vUv;
+    vec3 lin(vec3 c){ return pow(c, vec3(2.2)); }
+    void main(){
+      vec2 q = vec2(vUv.x * ${W}.0, (1.0 - vUv.y) * ${H}.0);
+      vec3 base = lin(vec3(0.027, 0.031, 0.047)), col = base;
+      float dg = length(q - vec2(540.0, 1020.0)) / 980.0;
+      col += lin(brillo.rgb) * brillo.a * (dg < 0.35 ? mix(1.0, 0.35, dg / 0.35) : 0.35 * (1.0 - clamp((dg - 0.35) / 0.65, 0.0, 1.0)));
+      for (int i = 0; i < ${N_BOKEH}; i++) { float d = length(q - bPos[i].xy) / bPos[i].z; col += lin(bCol[i]) * bPos[i].w * (1.0 - smoothstep(0.55, 1.0, d)); }
+      vec2 g = abs(mod(q - vec2(540.0, 960.0) + 45.0, 90.0) - 45.0);
+      col = mix(col, vec3(1.0), 0.03 * (1.0 - smoothstep(0.4, 1.4, min(g.x, g.y))));
+      col = mix(col, base, 0.92 * smoothstep(300.0, 1150.0, length(q - vec2(540.0, 960.0))));
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+  depthTest: false, depthWrite: false,
+});
 function pintarFondo(T) {
-  document.body.style.setProperty('--brillo', `${brillo.r | 0}, ${brillo.g | 0}, ${brillo.b | 0}`);
-  document.body.style.setProperty('--brillo-a', brillo.a.toFixed(3));
-  const g = $('polvo').getContext('2d'); g.clearRect(0, 0, W, H);
-  for (const m of motas) {
-    g.globalAlpha = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(T * 1.3 + m.f)); g.fillStyle = '#fff';
-    g.beginPath(); g.arc(m.x + Math.sin(T * 0.2 + m.f) * 12, ((m.y - m.v * T) % H + H) % H, m.r, 0, 6.283); g.fill();
-  }
+  fondoMat.uniforms.brillo.value.set(brillo.r / 255, brillo.g / 255, brillo.b / 255, brillo.a);
+  bokeh.forEach((b, i) => fondoMat.uniforms.bPos.value[i].set(b.x + Math.sin(T * 0.15 + b.f) * 40, b.y + Math.cos(T * 0.12 + b.f) * 30, b.r, b.a));
+}
+// Motas de polvo: van en la capa de efectos, por encima, muy tenues.
+const motas = (() => { const r = azar(7); return Array.from({ length: 70 }, () => ({ x: r() * W, y: r() * H, r: 0.6 + r() * 1.6, v: 3 + r() * 10, f: r() * 6.3 })); })();
+function pintarMotas(g, T) {
+  g.fillStyle = '#fff';
+  for (const m of motas) { g.globalAlpha = 0.08 + 0.22 * (0.5 + 0.5 * Math.sin(T * 1.3 + m.f)); g.beginPath(); g.arc(m.x + Math.sin(T * 0.2 + m.f) * 12, ((m.y - m.v * T) % H + H) % H, m.r, 0, 6.283); g.fill(); }
+  g.globalAlpha = 1;
 }
 
 // ---------- subtítulos ----------
@@ -274,30 +243,47 @@ function pintarSubs(T) {
     caja.innerHTML = grupo ? grupo.palabras.map(p => `<span class="p${p.clave ? ' clave' : ''}"><i class="sel"><b></b><b></b><b></b><b></b></i>${esc(p.w)}</span>`).join(' ') : '';
   }
   if (!grupo) return;
+  const p = EASE.sale(clamp((T - grupo.ini) / 0.16));
+  caja.style.opacity = p; caja.style.filter = p < 1 ? `blur(${(1 - p) * 9}px)` : ''; caja.style.transform = `translateY(${(1 - p) * 14}px)`;
   let activa = -1;
-  grupo.palabras.forEach((p, i) => { if (T >= p.t) activa = i; });
+  grupo.palabras.forEach((w, i) => { if (T >= w.t) activa = i; });
   caja.querySelectorAll('.p').forEach((s, i) => s.classList.toggle('activa', i === activa));
 }
 
 // ---------- API para render.cjs ----------
 window.iniciar = async datos => {
   D = datos;
-  renderer = new THREE.WebGLRenderer({ canvas: $('webgl'), antialias: true, alpha: true, preserveDrawingBuffer: true });
-  renderer.setPixelRatio(D.escalaWebgl ?? 0.75); renderer.setSize(W, H, false); renderer.setClearColor(0x000000, 0);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
+  const escala = D.escala ?? 0.75;  // el 3D se pinta al 75 % y se escala; textos y anotaciones van nítidos encima
+  renderer = new THREE.WebGLRenderer({ canvas: $('webgl'), antialias: false, alpha: false, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1); renderer.setSize(Math.round(W * escala), Math.round(H * escala), false);
+  renderer.toneMapping = THREE.NoToneMapping; renderer.outputColorSpace = THREE.LinearSRGBColorSpace;   // el tono y el sRGB los pone post.js
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
   escena = new THREE.Scene();
-  escena.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-  const sol = new THREE.DirectionalLight(0xffffff, 1.6); sol.position.set(3, 5, 4); escena.add(sol);
-  const contra = new THREE.DirectionalLight(0x9fd8ff, 1.0); contra.position.set(-4, 2, -3); escena.add(contra);
+  const fondoMalla = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), fondoMat); fondoMalla.frustumCulled = false; fondoMalla.renderOrder = -1000; fondoMalla.userData.sinSombra = true; escena.add(fondoMalla);
+  escena.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; escena.environmentIntensity = 0.6;
+  sol = new THREE.DirectionalLight(0xfff4e6, 2.4); sol.position.set(3, 6, 5); sol.castShadow = true;
+  sol.shadow.mapSize.set(1024, 1024); sol.shadow.radius = 4; sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02;
+  escena.add(sol, sol.target);
+  const contra = new THREE.DirectionalLight(0x9fd8ff, 1.3); contra.position.set(-5, 3, -4); escena.add(contra);
+  const sombras = ({ centro = [0, 0, 0], tam = 5 } = {}) => {
+    sol.target.position.set(...centro); sol.position.set(centro[0] + 3, centro[1] + 6, centro[2] + 5);
+    Object.assign(sol.shadow.camera, { left: -tam, right: tam, top: tam, bottom: -tam, near: 0.5, far: 30 }); sol.shadow.camera.updateProjectionMatrix();
+  };
+  sombras();
   camara = new THREE.PerspectiveCamera(camFov.v, W / H, 0.05, 200);
+  post = crearPost({ renderer, escena, camara, W, H, escala });
 
   const ctx = {
     THREE, escena, renderer, dur: D.duracion, frases: D.frases,
     f: i => D.frases[i].inicio,
     fin: i => D.frases[i].fin,
     palabra: (i, texto) => { const p = D.frases[i].palabras.find(p => norm(p.w).startsWith(norm(texto))); return p ? p.t : D.frases[i].inicio; },
-    tween, cada: fn => cada.push(fn), acumulado, azar, EASE, mat, geo, ui, fx,
+    tween, cada: fn => cada.push(fn), acumulado, azar, EASE, mat, geo, ui, fx, bordes, halo, dof, sol, sombras,
     color: (c, hex, o) => { const k = new THREE.Color(hex); tween(c, { r: k.r, g: k.g, b: k.b }, o); },
+    suelo: ({ y = -1, opacidad = 0.4, tam = 40 } = {}) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(tam, tam), new THREE.ShadowMaterial({ opacity: opacidad }));
+      m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; m.userData.sinSombra = true; escena.add(m); return m;
+    },
     camara: {
       poner: ({ pos, mira = [0, 0, 0], fov = 35 }) => { camPos.set(...pos); camMira.set(...mira); camFov.v = fov; },
       ir: ({ pos, mira, fov }, o) => { if (pos) tween(camPos, { x: pos[0], y: pos[1], z: pos[2] }, o); if (mira) tween(camMira, { x: mira[0], y: mira[1], z: mira[2] }, o); if (fov) tween(camFov, { v: fov }, o); },
@@ -311,6 +297,7 @@ window.iniciar = async datos => {
   await Promise.all(['500', '700', '800'].map(p => document.fonts.load(`${p} 40px "JetBrains Mono"`)).concat([document.fonts.load('800 40px Inter')]));
   const modulo = await import(`../../escenas/${D.id}.js`);
   await modulo.default(ctx);
+  escena.traverse(o => { if (o.isMesh && !o.userData.sinSombra && !o.material.transparent) { o.castShadow = true; o.receiveShadow = true; } });
   agruparTweens();
   await document.fonts.ready;
 };
@@ -323,7 +310,8 @@ window.pintar = T => {
   camara.position.set(camPos.x + dx, camPos.y + dy, camPos.z);
   camara.fov = camFov.v; camara.updateProjectionMatrix(); camara.lookAt(camMira);
   escena.updateMatrixWorld(); camara.updateMatrixWorld();
-  renderer.render(escena, camara);
-  pintarFondo(T); pintarOverlays(T); pintarFx(T); pintarSubs(T);
+  pintarFondo(T);
+  post.render({ foco: dof.foco > 0 ? dof.foco : camPos.distanceTo(camMira), apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion });
+  pintarOverlays(T); pintarFx(T); pintarSubs(T);
 };
 window.motorListo = true;

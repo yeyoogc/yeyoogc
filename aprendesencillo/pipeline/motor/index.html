@@ -20,23 +20,20 @@
   body { font-family: 'Inter', sans-serif; color: var(--texto); position: relative; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .emoji { font-family: 'Noto Color Emoji', sans-serif; font-weight: 400; }
-  #brillo, #rejilla, #polvo, #webgl, #fx, #capa, #subs { position: absolute; inset: 0; }
-  #brillo { background: radial-gradient(circle at 50% 54%, rgba(var(--brillo), var(--brillo-a)) 0%, rgba(var(--brillo), calc(var(--brillo-a) * .35)) 28%, transparent 62%); }
-  #rejilla { background-image: linear-gradient(rgba(255,255,255,.03) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,.03) 1.5px, transparent 1.5px);
-             background-size: 90px 90px; background-position: center; -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 25%, transparent 72%); }
+  #webgl, #fx, #capa, #subs { position: absolute; inset: 0; }
   #webgl { width: 1080px; height: 1920px; }
   #capa { pointer-events: none; }
 
   /* subtítulos: frase corta arriba, palabras clave en blanco y la palabra activa con caja de selección */
-  #subs { top: 280px; bottom: auto; left: 70px; right: 70px; text-align: center; font-size: 60px; line-height: 1.3; letter-spacing: -.5px; }
-  #subs .p { position: relative; display: inline-block; margin: 0 7px; color: var(--gris); font-weight: 500; }
+  #subs { top: 250px; bottom: auto; left: 50px; right: 50px; text-align: center; font-size: 82px; line-height: 1.22; letter-spacing: -1.5px; text-shadow: 0 3px 22px rgba(0,0,0,.6); }
+  #subs .p { position: relative; display: inline-block; margin: 0 9px; color: rgba(255,255,255,.52); font-weight: 500; }
   #subs .p.clave { color: var(--texto); font-weight: 800; }
   #subs .p.activa { color: var(--texto); }
-  #subs .sel { display: none; position: absolute; inset: 2px -8px -2px -8px; border: 2.5px solid var(--azul-sel); background: rgba(77,141,255,.12); }
+  #subs .sel { display: none; position: absolute; inset: 4px -10px 0 -10px; border: 3px solid var(--azul-sel); background: rgba(77,141,255,.14); }
   #subs .activa .sel { display: block; }
-  #subs .sel b { position: absolute; width: 11px; height: 11px; background: #fff; border: 2.5px solid var(--azul-sel); }
-  #subs .sel b:nth-child(1) { left: -7px; top: -7px; } #subs .sel b:nth-child(2) { right: -7px; top: -7px; }
-  #subs .sel b:nth-child(3) { left: -7px; bottom: -7px; } #subs .sel b:nth-child(4) { right: -7px; bottom: -7px; }
+  #subs .sel b { position: absolute; width: 14px; height: 14px; background: #fff; border: 3px solid var(--azul-sel); }
+  #subs .sel b:nth-child(1) { left: -9px; top: -9px; } #subs .sel b:nth-child(2) { right: -9px; top: -9px; }
+  #subs .sel b:nth-child(3) { left: -9px; bottom: -9px; } #subs .sel b:nth-child(4) { right: -9px; bottom: -9px; }
 
   /* anotaciones */
   .ov { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
@@ -77,9 +74,6 @@
 </style>
 </head>
 <body>
-  <div id="brillo"></div>
-  <div id="rejilla"></div>
-  <canvas id="polvo" width="1080" height="1920"></canvas>
   <canvas id="webgl"></canvas>
   <canvas id="fx" width="1080" height="1920"></canvas>
   <div id="capa"></div>

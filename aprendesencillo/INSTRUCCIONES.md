@@ -5,10 +5,10 @@ Objetivo: dejar en el Telegram de Yeyo los 2 TikToks de hoy, listos para publica
 ## Pasos
 
 1. `cd aprendesencillo && python3 pipeline/siguiente.py` → temas de hoy (`id | pregunta | pista`).
-2. Lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo de referencia del estilo y de la API.
+2. Lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo de referencia del estilo, del nivel de detalle y de la API.
 3. Para cada tema escribe `guiones/<id>.json` y `escenas/<id>.js` (los dos temas en la misma respuesta).
 4. Previa (unos 20 s, no gasta voz si ya está en caché): `python3 pipeline/make.py guiones/<id>.json --previa`, y mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase). Corrige lo que se vea mal: cosas fuera de cuadro, solapes con los subtítulos, frases sin nada nuevo en pantalla. Como mucho 2 rondas por vídeo.
-5. Render y envío en un solo comando (unos 6 min por vídeo, pon timeout de 20 min):
+5. Render y envío en un solo comando (unos 15 min por vídeo; lánzalo en segundo plano y espera a que acabe):
    `python3 pipeline/make.py guiones/<id1>.json && python3 pipeline/make.py guiones/<id2>.json && python3 pipeline/enviar.py out/<id1>.mp4 out/<id2>.mp4`
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
 
@@ -44,11 +44,17 @@ No hagas commits ni push: el tema sale de la fecha y no hay estado que guardar.
 | `camara.poner({pos, mira, fov})` / `camara.ir({pos, mira, fov}, {t, dur})` | cámara. Con fov 38, el ancho visible es ≈ 0,39 × distancia |
 | `fondo.ponerBrillo(hex, a)` / `fondo.brillo(hex, {t, dur, a})` | color del resplandor del fondo |
 
-**3D**:
+**3D** (esto es lo que marca la diferencia: tiene que parecer un render de producto, no un dibujo):
 - `THREE` completo y `escena`.
-- Materiales: `mat.metal(color, rugosidad)`, `mat.oro()`, `mat.plastico(color)`, `mat.vidrio(color, opacidad)`, `mat.emisivo(color)`, `mat.madera()`, `mat.hormigon()`.
-- Geometrías: `geo.caja(w, h, d, radio)` (caja redondeada), `geo.engranaje(dientes, radio, grosor, {aligerado, sinDiente})`, `geo.diente(...)`, `geo.textura((ctx2d, w, h) => …)` (para rótulos y etiquetas pintadas), y cualquier primitiva de THREE (Cylinder, Sphere, Lathe, Extrude, Torus…).
-- Modela el objeto real simplificado, pero reconocible.
+- Materiales: `mat.metal(color, rugosidad)` (cepillado), `mat.metalPulido()`, `mat.oro()`, `mat.laton()`, `mat.plastico(color, rugosidad)`, `mat.goma()`, `mat.vidrio(color, opacidad)`, `mat.emisivo(color)`, `mat.madera(rx, ry)`, `mat.hormigon(rx, ry)` y `mat.pintado((ctx2d, w, h) => …)` para rótulos, escalas, pantallas, patrones o placas.
+- Geometrías: `geo.caja(w, h, d, radio)` (redondeada), `geo.extruir(shape, grosor, bisel)`, `geo.torno([[radio, altura], …])` (pomos, botellas, latas, bombillas), `geo.engranaje(dientes, radio, grosor, {aligerado, sinDiente})`, `geo.diente(...)`, `geo.ejeEstriado(radio, largo)`, y cualquier primitiva de THREE.
+- Ayudantes: `bordes(malla, {color})` (aristas iluminadas, para cristales y piezas fantasma), `halo(obj, {color, tam})` (resplandor; anima `halo.material.opacity`), `suelo({y})` (recibe sombras), `sombras({centro, tam})` (zona que cubre la luz que da sombra; si la escena salta de sitio, llámalo dentro de `cada`).
+- Profundidad de campo: enfoca solo el punto al que mira la cámara. `dof.apertura` (1 suave, 2,5 macro) y `dof.foco` (0 = automático). Anímalo con `tween(dof, …)`.
+- Calidad mínima:
+  - Modela el objeto real con sus detalles (biseles, tornillos, estrías, rótulos, texturas), no un bloque genérico.
+  - Planos macro: el objeto llena el ancho y puede salirse un poco del cuadro.
+  - Fondo oscuro: nada de planos grandes y claros detrás, porque lavan la imagen y se dejan de leer los subtítulos.
+  - Transiciones con cámara en movimiento continuo (bajar al interior, barrido lateral), no cortes.
 
 **Anotaciones** (HTML encima del 3D). Todas aceptan `t`, `hasta` (por defecto, el final de la frase), y una posición: `ancla` (un objeto 3D o `[x,y,z]`) con `offset`, o `x`/`y` en píxeles (lienzo de 1080×1920).
 
