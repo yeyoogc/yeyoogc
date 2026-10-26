@@ -342,6 +342,18 @@ window.pintar = T => {
   post.render({ foco: dof.foco > 0 ? dof.foco : camPos.distanceTo(camMira), apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion });
   pintarOverlays(T); pintarFx(T); pintarSubs(T);
 };
+// Para la previa: lo que más pesa en el render por software (cuenta lo visible en el instante pintado).
+window.estadisticas = () => {
+  let mallas = 0, sombras = 0, tri = 0, luces = 0, lucesSombra = 0;
+  escena.traverse(o => {
+    if (o.isLight && o.visible && !o.isAmbientLight && !o.isHemisphereLight) { luces++; if (o.castShadow) lucesSombra += o.isPointLight ? 6 : 1; }
+    if (!o.isMesh || !o.visible || o.userData.sinSombra && o.renderOrder === -1000) return;
+    const g = o.geometry, n = o.isInstancedMesh ? o.count : 1;
+    mallas += n; if (o.castShadow) sombras += n;
+    tri += n * (g.index ? g.index.count : g.attributes.position.count) / 3;
+  });
+  return { mallas, sombras, tri: Math.round(tri), luces, lucesSombra };
+};
 // Lista de efectos de sonido sin duplicados (dos del mismo tipo a menos de 0,15 s cuentan como uno).
 window.sonidos = () => {
   const lista = [...sonidos].sort((a, b) => a.t - b.t), fuera = [];

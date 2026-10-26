@@ -12,16 +12,16 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 3. **Plano de rodaje antes de programar:** en el propio `guiones/<id>.json` añade `"planos"`, una línea por frase: qué enseña la cámara, qué se mueve y qué anotación aparece. Comprueba que cada frase tiene un cambio visual claro y que hay un "momento" fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan.
 4. **Bucle de crítica** (aquí se gana o se pierde el vídeo):
    1. Saca la previa: `python3 pipeline/make.py guiones/<id>.json --previa` (unos 30 s; la voz queda en caché y no se vuelve a gastar).
-   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto.
+   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto. Y el **coste de render**: segundos por fotograma de cada frase y minutos estimados. Si alguna frase sale `PESADA` o el total pasa de 35 min, aligérala en esta misma ronda (ver «Rendimiento» abajo): si no, el render baja solo la resolución del 3D y el vídeo se ve peor.
    3. Puntúa cada fotograma del 1 al 10 en cuatro cosas:
       - **acabado**: texturas y detalle, nada que parezca de juguete;
       - **composición**: el objeto llena el cuadro y no hay solapes ni nada cortado sin querer;
       - **claridad**: se entiende la idea de esa frase sin audio;
       - **legibilidad**: subtítulos y anotaciones se leen bien.
    4. Escribe los 3 peores problemas, arréglalos y repite.
-   5. Para cuando todo esté en 8 o más, o tras 3 rondas.
-5. Render y envío (unos 30 min para 1 minuto de vídeo): lánzalo **en segundo plano** y espera a que acabe:
-   `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4`
+   5. Para cuando todo esté en 8 o más, o tras 3 rondas. Si después tocas algo, saca otra previa antes del render: nada entra en el vídeo sin haberlo visto.
+5. Render y envío (lo que dijo la previa, normalmente 20-30 min): lánzalo **en segundo plano** con el aviso de fallo encadenado y espera a que acabe:
+   `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4 || python3 pipeline/enviar.py --aviso "Falló el render o el envío de <id>"`
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
 
 No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guardar.
@@ -61,6 +61,7 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 - `THREE` completo y `escena`.
 - Materiales: `mat.metal(color, rugosidad)` (cepillado), `mat.metalPulido()`, `mat.oro()`, `mat.laton()`, `mat.plastico(color, rugosidad)`, `mat.goma()`, `mat.vidrio(color, opacidad)`, `mat.emisivo(color)`, `mat.madera(rx, ry)`, `mat.hormigon(rx, ry)` y `mat.pintado((ctx2d, w, h) => …)` para rótulos, escalas, pantallas, patrones o placas.
 - Geometrías: `geo.caja(w, h, d, radio)` (redondeada), `geo.extruir(shape, grosor, bisel)`, `geo.torno([[radio, altura], …])` (pomos, botellas, latas, bombillas), `geo.engranaje(dientes, radio, grosor, {aligerado, sinDiente})`, `geo.diente(...)`, `geo.ejeEstriado(radio, largo)`, y cualquier primitiva de THREE.
+- Rendimiento (el render es por CPU, sin tarjeta gráfica): lo que más cuesta es lo que llena la pantalla y las pasadas de sombra. Una `PointLight` o `SpotLight` con `castShadow` vuelve a pintar la escena (6 veces la PointLight): para dar ambiente usa luces sin sombra, `mat.emisivo` o `halo`. Piezas repetidas (traviesas, tornillos, dientes sueltos): `THREE.InstancedMesh`, no cientos de mallas. Cilindros y toros con 32-64 segmentos bastan a este tamaño. Lo que ya no sale en cuadro, `visible = false`.
 - Ayudantes: `bordes(malla, {color})` (aristas iluminadas, para cristales y piezas fantasma), `halo(obj, {color, tam})` (resplandor; anima `halo.material.opacity`), `suelo({y})` (recibe sombras), `sombras({centro, tam})` (zona que cubre la luz que da sombra; si la escena salta de sitio, llámalo dentro de `cada`).
 - Profundidad de campo: enfoca solo el punto al que mira la cámara. `dof.apertura` (1 suave, 2,5 macro) y `dof.foco` (0 = automático). Anímalo con `tween(dof, …)`.
 - Calidad mínima:

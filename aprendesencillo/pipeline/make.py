@@ -159,15 +159,12 @@ def construir_timeline(guion, chars, tiempos, total):
 
 def medir_previa(carpeta, timeline):
     """Lo que un vistazo no mide bien: cuánto ocupa lo importante en la zona principal y si el plano está lavado."""
-    try:
-        from PIL import Image
-    except ImportError:
-        return
     print("  medición (zona principal, y 460-1440): cobertura = parte del cuadro con algo visible")
+    visible = bytes(int(v >= 60) for v in range(256))
     for i, f in enumerate(sorted(carpeta.glob("*.jpg"))):
-        h = Image.open(f).convert("L").crop((0, 460, 1080, 1440)).histogram()
-        total = sum(h)
-        cobertura, media = sum(h[60:]) / total, sum(n * c for n, c in enumerate(h)) / total
+        gris = subprocess.check_output(["ffmpeg", "-v", "error", "-i", str(f), "-vf", "crop=1080:980:0:460,format=gray",
+                                        "-f", "rawvideo", "-"])
+        cobertura, media = gris.translate(visible).count(1) / len(gris), sum(gris) / len(gris)
         avisos = (["CASI VACÍO: el objeto ocupa muy poco"] if cobertura < 0.15 else []) + (["MUY CLARO: puede lavar el plano"] if media > 150 else [])
         print(f"    frase {i:2d}: cobertura {cobertura:4.0%}, brillo {media:3.0f}  {' · '.join(avisos)}  «{timeline['frases'][i]['texto'][:40]}»")
 

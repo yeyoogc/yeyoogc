@@ -13,6 +13,11 @@ const RAIZ = path.join(__dirname, '..');
 const TIPOS = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg' };
 const [, , rutaTimeline, arg2, arg3] = process.argv;
 
+// Presupuesto de render. Con WebGL por software el coste depende de la escena: si va a tardar más de LIMITE_MIN,
+// el 3D se pinta a menos resolución (los textos siguen nítidos) para quedarse cerca de OBJETIVO_MIN.
+const LIMITE_MIN = 35, OBJETIVO_MIN = 28, ESCALA = 0.75, ESCALA_MIN = 0.5;
+const FIJO = 0.28;   // s por fotograma que no dependen de la resolución del 3D (captura, textos, FXAA); medido en marcha-atras-120
+
 // Efectos de sonido sintetizados con ffmpeg (sin archivos de audio de terceros). nivel = volumen bajo la voz.
 const EFECTOS = {
   whoosh: { nivel: 0.9, gen: d => ['-f', 'lavfi', '-i', `anoisesrc=d=${d}:c=pink:a=0.6`, '-af', `highpass=f=250,lowpass=f=3200,afade=t=in:st=0:d=${(d * 0.45).toFixed(2)},afade=t=out:st=${(d * 0.45).toFixed(2)}:d=${(d * 0.55).toFixed(2)}`] },
@@ -55,23 +60,42 @@ function servidor() {
   });
 }
 
-(async () => {
-  const timeline = JSON.parse(fs.readFileSync(rutaTimeline, 'utf8'));
-  const srv = await servidor();
-  const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+async function abrir(navegador, puerto, timeline) {
   const pagina = await navegador.newPage({ viewport: { width: 1080, height: 1920 } });
   pagina.on('console', m => { if (['error', 'warning'].includes(m.type())) console.log(`[navegador] ${m.text()}`); });
   pagina.on('pageerror', e => console.log(`[error en la escena] ${e.message}`));
-  await pagina.goto(`http://127.0.0.1:${srv.address().port}/pipeline/motor/index.html`);
+  await pagina.goto(`http://127.0.0.1:${puerto}/pipeline/motor/index.html`);
   await pagina.waitForFunction(() => window.motorListo, null, { timeout: 30000 });
   await pagina.evaluate(d => window.iniciar(d), timeline);
+  return pagina;
+}
+
+// La GPU por software trabaja al capturar, así que se mide pintar + captura.
+async function captura(pagina, t, opciones = {}) {
+  const a = Date.now();
+  await pagina.evaluate(t => window.pintar(t), t);
+  const jpg = await pagina.screenshot({ type: 'jpeg', quality: 92, ...opciones });
+  return { jpg, s: (Date.now() - a) / 1000 };
+}
+// Segundos por fotograma en t, en una segunda pasada para no contar la compilación de shaders de lo que aparece por primera vez.
+const coste = async (pagina, t) => { await captura(pagina, t); return (await captura(pagina, t)).s; };
+// Minutos de render: el coste a mitad de cada frase, ponderado por lo que dura la frase.
+const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + costes[i] * (f.fin - f.inicio) * FPS, 0) / 60;
+
+(async () => {
+  const timeline = JSON.parse(fs.readFileSync(rutaTimeline, 'utf8'));
+  const srv = await servidor(), puerto = srv.address().port;
+  const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  let pagina = await abrir(navegador, puerto, timeline);
 
   if (arg2 === '--previa') {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'previa-'));
-    const tiempos = timeline.frases.map(f => (f.inicio + f.fin) / 2);
+    const tiempos = timeline.frases.map(f => (f.inicio + f.fin) / 2), costes = [], lineas = [];
     for (const [i, t] of tiempos.entries()) {
-      await pagina.evaluate(t => window.pintar(t), t);
-      await pagina.screenshot({ type: 'jpeg', quality: 85, path: path.join(dir, `${String(i).padStart(2, '0')}.jpg`) });
+      await captura(pagina, t, { quality: 85, path: path.join(dir, `${String(i).padStart(2, '0')}.jpg`) });
+      const st = await pagina.evaluate(() => window.estadisticas());
+      costes.push((await captura(pagina, t)).s);
+      lineas.push(`    frase ${String(i).padStart(2)}: ${costes[i].toFixed(2)} s/fotograma · ${st.mallas} mallas (${st.sombras} con sombra) · ${Math.round(st.tri / 1000)} mil triángulos · ${st.luces} luces (${st.lucesSombra} pasadas de sombra)${costes[i] > 1.2 ? '  ← PESADA' : ''}`);
     }
     // Copia de cada fotograma suelto (para mirarlos a tamaño real y medirlos en make.py).
     const sueltos = arg3.replace(/\.jpg$/, '');
@@ -81,7 +105,24 @@ function servidor() {
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '1', '-i', path.join(dir, '%02d.jpg'),
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
+    const est = estimar(timeline, costes);
+    console.log(`  coste de render (objetivo: todas por debajo de 1,2 s/fotograma):\n${lineas.join('\n')}`);
+    console.log(`  render estimado: ${Math.round(est)} min` + (est > LIMITE_MIN
+      ? ` → DEMASIADO: el render bajaría la resolución del 3D. Aligera las frases PESADAS (menos luces con sombra: cada PointLight con sombra pinta la escena 6 veces; InstancedMesh para piezas repetidas; menos segmentos; quita lo que no se ve).`
+      : ''));
   } else {
+    if (timeline.escala == null) {
+      const costes = [];
+      for (const f of timeline.frases) costes.push(await coste(pagina, (f.inicio + f.fin) / 2));
+      const est = estimar(timeline, costes), fotogramas = timeline.duracion * FPS;
+      if (est > LIMITE_MIN) {
+        const medio = est * 60 / fotogramas, objetivo = OBJETIVO_MIN * 60 / fotogramas;
+        const escala = Math.max(ESCALA_MIN, Math.round(100 * ESCALA * Math.sqrt(Math.max(0, objetivo - FIJO) / (medio - FIJO))) / 100);
+        console.log(`  render estimado ${Math.round(est)} min: el 3D se pinta al ${Math.round(escala * 100)} % en vez del ${ESCALA * 100} % para no pasar de ~${OBJETIVO_MIN} min`);
+        await pagina.close();
+        pagina = await abrir(navegador, puerto, { ...timeline, escala });
+      } else console.log(`  render estimado: ${Math.round(est)} min`);
+    }
     const dirSonido = fs.mkdtempSync(path.join(os.tmpdir(), 'sonido-'));
     const audio = mezclarSonido(await pagina.evaluate(() => window.sonidos()), arg2, path.join(dirSonido, 'mezcla.wav'), dirSonido);
     const ffmpeg = spawn('ffmpeg', [
@@ -94,10 +135,12 @@ function servidor() {
     const terminado = new Promise((ok, ko) => ffmpeg.on('close', c => (c === 0 ? ok() : ko(new Error(`ffmpeg salió con ${c}`)))));
     const total = Math.ceil(timeline.duracion * FPS), t0 = Date.now();
     for (let f = 0; f < total; f++) {
-      await pagina.evaluate(t => window.pintar(t), f / FPS);
-      const jpg = await pagina.screenshot({ type: 'jpeg', quality: 92 });
+      const { jpg } = await captura(pagina, f / FPS);
       if (!ffmpeg.stdin.write(jpg)) await new Promise(r => ffmpeg.stdin.once('drain', r));
-      if (f % 150 === 0) console.log(`  fotograma ${f}/${total} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+      if (f % 150 === 0) {
+        const s = (Date.now() - t0) / 1000;
+        console.log(`  fotograma ${f}/${total} (${s.toFixed(0)} s${f ? `, faltan ~${Math.round(s / f * (total - f) / 60)} min` : ''})`);
+      }
     }
     ffmpeg.stdin.end();
     await terminado;
