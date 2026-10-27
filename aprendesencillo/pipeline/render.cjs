@@ -16,6 +16,7 @@ const [, , rutaTimeline, arg2, arg3] = process.argv;
 // Presupuesto de render. Con WebGL por software el coste depende de la escena: si va a tardar más de LIMITE_MIN,
 // el 3D se pinta a menos resolución (los textos siguen nítidos) para quedarse cerca de OBJETIVO_MIN.
 const LIMITE_MIN = 48, OBJETIVO_MIN = 42, ESCALA = 0.75, ESCALA_MIN = 0.5;
+const SALTO = 25;   // diferencia media a partir de la cual hay salto: movimiento continuo 2-17, corte 48-89 (medido en marcha-atras-120)
 const FIJO = 0.15;   // s por fotograma que no dependen de la resolución del 3D (captura y textos); medido en marcha-atras-120
 
 // Efectos de sonido sintetizados con ffmpeg (sin archivos de audio de terceros). nivel = volumen bajo la voz.
@@ -23,7 +24,8 @@ const EFECTOS = {
   whoosh: { nivel: 0.9, gen: d => ['-f', 'lavfi', '-i', `anoisesrc=d=${d}:c=pink:a=0.6`, '-af', `highpass=f=250,lowpass=f=3200,afade=t=in:st=0:d=${(d * 0.45).toFixed(2)},afade=t=out:st=${(d * 0.45).toFixed(2)}:d=${(d * 0.55).toFixed(2)}`] },
   pop: { nivel: 0.25, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.7*sin(2*PI*(480+900*exp(-25*t))*t)*exp(-22*t)':d=0.18"] },
   clic: { nivel: 0.35, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.8*(random(0)*2-1)*exp(-250*t)+0.4*sin(2*PI*3000*t)*exp(-120*t)':d=0.05", '-af', 'highpass=f=1500'] },
-  golpe: { nivel: 0.45, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.9*sin(2*PI*(48+90*exp(-18*t))*t)*exp(-5*t)+0.35*(random(0)*2-1)*exp(-28*t)':d=0.7", '-af', 'lowpass=f=4000'] },
+  // El golpe vive entre 100 y 300 Hz con un chasquido encima: por debajo de ~120 Hz los altavoces del móvil no suenan.
+  golpe: { nivel: 0.5, gen: () => ['-f', 'lavfi', '-i', "aevalsrc='0.7*sin(2*PI*(100+170*exp(-20*t))*t)*exp(-6*t)+0.3*sin(2*PI*210*t)*exp(-10*t)+0.45*(random(0)*2-1)*exp(-35*t)':d=0.7", '-af', 'lowpass=f=5000'] },
   chispas: { nivel: 0.3, gen: d => ['-f', 'lavfi', '-i', `aevalsrc='0.9*(random(0)*2-1)*gt(random(1),0.996)':d=${d}`, '-af', `highpass=f=1800,lowpass=f=9000,afade=t=out:st=${Math.max(0, d - 0.3).toFixed(2)}:d=0.3`] },
 };
 
@@ -36,7 +38,7 @@ function mezclarSonido(eventos, voz, destino, dir) {
       execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...EFECTOS[e.tipo].gen(d), '-ar', '48000', '-ac', '1', archivos[clave]]);
     }
     entradas.push('-i', archivos[clave]);
-    const ms = Math.round(e.t * 1000);
+    const ms = Math.round(e.t * 1000 + 1000 / FPS);   // el sonido llega un fotograma después de la imagen, como en la vida real
     filtros.push(`[${i + 1}]adelay=${ms}|${ms},volume=${(EFECTOS[e.tipo].nivel * (e.vol ?? 1)).toFixed(3)}[s${i}]`);
   });
   if (!filtros.length) return voz;
@@ -109,7 +111,22 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '1', '-i', path.join(dir, '%02d.jpg'),
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
+    // Saltos: diferencia media (0-255) en la zona principal entre el fotograma anterior y el siguiente a cada cambio de frase.
+    // A 60 fps, un movimiento continuo cambia poco de un fotograma al otro; un corte o una pieza que aparece de golpe, mucho.
+    const saltos = [];
+    for (const [i, f] of timeline.frases.entries()) {
+      if (!i) continue;
+      const a = path.join(dir, 'antes.jpg'), b = path.join(dir, 'despues.jpg');
+      await captura(pagina, f.inicio - 1 / FPS, { calidad: 85, ruta: a }); await captura(pagina, f.inicio + 1 / FPS, { calidad: 85, ruta: b });
+      const sal = execFileSync('ffmpeg', ['-v', 'error', '-i', a, '-i', b, '-filter_complex',
+        '[0]crop=1080:980:0:460,format=gray[x];[1]crop=1080:980:0:460,format=gray[y];[x][y]blend=all_mode=difference,signalstats,metadata=mode=print:key=lavfi.signalstats.YAVG:file=-',
+        '-f', 'null', '-']).toString();
+      const d = parseFloat((sal.match(/YAVG=([\d.]+)/) || [])[1] || 0);
+      if (d > SALTO) saltos.push(`    frase ${String(i).padStart(2)}: ${d.toFixed(1)}  ← SALTO al empezar «${f.texto.slice(0, 40)}»`);
+    }
+    fs.rmSync(path.join(dir, 'antes.jpg'), { force: true }); fs.rmSync(path.join(dir, 'despues.jpg'), { force: true });
     const est = estimar(timeline, costes);
+    console.log(`  transiciones (a 60 fps todo cambio de plano debe ser un movimiento, no un corte):\n${saltos.length ? saltos.join('\n') : '    sin saltos bruscos'}`);
     console.log(`  maquetación (las anotaciones de texto ya se apartan solas; esto es lo que no se pudo resolver):\n${maqueta.length ? maqueta.join('\n') : '    sin problemas'}`);
     console.log(`  coste de render (objetivo: todas por debajo de 0,85 s/fotograma):\n${lineas.join('\n')}`);
     console.log(`  render estimado: ${Math.round(est)} min` + (est > LIMITE_MIN

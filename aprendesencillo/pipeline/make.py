@@ -160,7 +160,7 @@ def construir_timeline(guion, chars, tiempos, total):
 def medir_previa(carpeta, timeline):
     """Lo que un vistazo no mide bien: cuánto ocupa lo importante en la zona principal y si el plano está lavado."""
     print("  medición (zona principal, y 460-1440): cobertura = parte del cuadro con algo visible")
-    visible = bytes(int(v >= 60) for v in range(256))
+    visible = bytes(int(v >= 40) for v in range(256))   # el fondo queda por debajo de 40; un objeto oscuro bien iluminado, por encima
     for i, f in enumerate(sorted(carpeta.glob("*.jpg"))):
         gris = subprocess.check_output(["ffmpeg", "-v", "error", "-i", str(f), "-vf", "crop=1080:980:0:460,format=gray",
                                         "-f", "rawvideo", "-"])

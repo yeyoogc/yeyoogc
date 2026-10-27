@@ -1,5 +1,6 @@
 {
   "id": "marcha-atras-120",
+  "look": "Pomo de plástico mate 0x15161b (rug. 0,55) con patrón pintado; caja de cambios en acero cepillado 0xc6cbd3 (rug. 0,3), piñón loco 0xd6c9b0 (0,28) y latón; centralita en placa verde pintada con chip mate y patas de oro. Acento único de las anotaciones: rojo #ff4d5e (lo que falla); cian #2ee6f0 solo para giros y cifras.",
   "frases": [
     "¿Qué pasa si metes la *marcha atrás* a *120*?",
     "Ni lo intentes: *no entra*.",
@@ -12,15 +13,15 @@
     "Envíaselo a ese colega que *siempre* ha querido probarlo."
   ],
   "planos": [
-    "Macro del pomo con el patrón de marchas; cifra 120 km/h arriba; círculo rojo en la R y la palanca se inclina hacia ella.",
-    "La palanca rebota a su sitio; sello NO ENTRA de golpe con temblor.",
-    "La cámara baja por dentro hasta la caja de cambios: engranaje de salida girando, flecha de giro y etiqueta ~4.000 rpm.",
-    "Plano del piñón loco con caja PIÑÓN LOCO y flechas de giro opuestas en el piñón loco y en el intermediario.",
-    "Vista lateral: 0 rpm frente a ~4.000 rpm; fantasma de cristal de dónde tiene que entrar y el piñón avanza hacia él.",
-    "Macro del contacto: tarjeta SINCRONIZADOR ✕; los dientes chocan varias veces con chispas, fogonazo y temblor; etiqueta ¡rasca!",
-    "El diente se pone rojo, se parte y sale volando hacia la cámara; etiqueta diente partido.",
-    "Barrido lateral hasta la centralita (placa con chip TCU); etiqueta 'orden: marcha atrás' y tarjeta R → ignorada.",
-    "La cámara se aleja, la placa queda desenfocada y aparece el móvil con la hoja de compartir; el dedo pulsa Enviar."
+    "CÁMARA de [1,0 1,3 3,0] a [0,55 1,15 2,7], fov 32, lineal hasta f(2) (empuje lento) · HÉROE: la palanca se inclina hacia la R, muelle 0,7 s · SECUNDARIO: círculo rojo en la R 0,1 s antes · ANOTACIÓN: cifra 120 km/h arriba · PASO: el empuje sigue en la frase 2",
+    "CÁMARA: sigue el empuje · HÉROE: la palanca rebota a su sitio, jugueton 0,8 s · SECUNDARIO: temblor 0,4 s · ANOTACIÓN: sello NO ENTRA de golpe en «no» · PASO: la cámara baja por dentro hacia la caja",
+    "CÁMARA de [0,55 1,15 2,7] a [2,6 Y+2,1 8,0], fov 34, inOut 1,5 s (bajada continua) · HÉROE: engranaje de salida girando a tope (lineal) · SECUNDARIO: flecha de giro 0,15 s después · ANOTACIÓN: «~4.000 rpm» con línea guía · PASO: barrido lateral",
+    "CÁMARA a [-1,5 Y+1,5 7,6], inOut 1,2 s · HÉROE: el piñón loco invierte el giro · SECUNDARIO: flechas de giro opuestas · ANOTACIÓN: caja PIÑÓN LOCO · PASO: la cámara rodea hasta la vista lateral",
+    "CÁMARA a [-6,2 Y+2,0 5,4], inOut 1,4 s · HÉROE: el piñón avanza hacia su hueco, pesado 1,3 s · SECUNDARIO: fantasma de cristal del hueco · ANOTACIÓN: 0 rpm frente a ~4.000 rpm · PASO: acercamiento al contacto",
+    "CÁMARA a [0,6 Y-0,1 3,1] mirando al contacto, fov 30, inOut 1,0 s; apertura 2,4 · HÉROE: los dientes chocan 3 veces (anticipación de 0,06 s antes de cada golpe) · SECUNDARIO: chispas y temblor · ANOTACIÓN: tarjeta SINCRONIZADOR ✕ y «¡rasca!» · PASO: retroceso corto",
+    "CÁMARA a [-2,2 Y+1,3 4,8], fov 32, inOut 0,9 s; exposición 0,8 · HÉROE: el diente se calienta y sale volando hacia cámara, sale 1,3 s · SECUNDARIO: fogonazo · ANOTACIÓN: «diente partido» · PASO: barrido lateral hasta la centralita",
+    "CÁMARA a [X+0,5 Y+2,7 4,7], fov 34, inOut 1,0 s (barrido continuo) · HÉROE: el LED de la centralita parpadea al recibir la orden · SECUNDARIO: pistas de la placa que se iluminan · ANOTACIÓN: «orden: marcha atrás» y tarjeta R → ignorada · PASO: la cámara se aleja",
+    "CÁMARA a [X+0,6 Y+2,6 6,5] enfocando delante, inOut 1,2 s; apertura 2,5 (la placa se desenfoca) · HÉROE: entra el móvil con la hoja de compartir · SECUNDARIO: el dedo pulsa Enviar a los 1,5 s · ANOTACIÓN: ninguna más · PASO: fin"
   ],
   "caption": "¿Marcha atrás a 120 km/h? 🚗💥 Ni lo intentes (y aquí está el porqué). ¿Qué pregunta hago mañana? 👇",
   "hashtags": [

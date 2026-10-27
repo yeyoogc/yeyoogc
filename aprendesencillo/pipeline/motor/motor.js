@@ -98,7 +98,9 @@ function proyectar(ancla, offset) {
 function overlay(html, cls, o = {}) {
   const el = document.createElement('div'); el.className = `ov ${cls}`; el.innerHTML = html; $('capa').appendChild(el);
   if (o.color) el.style.setProperty('--c', o.color);
-  const t = o.t ?? 0;
+  // Escalonado: si ya entra otra anotación casi a la vez, esta espera 90 ms (que todo aparezca de golpe queda barato).
+  let t = o.t ?? 0;
+  while (overlays.some(v => !v.fijo && Math.abs(v.t - t) < 0.06)) t += 0.09;
   const ov = { el, cls, t, hasta: o.hasta ?? finDeFrase(t), ancla: o.ancla, offset: o.offset && new THREE.Vector3(...o.offset), x: o.x ?? W / 2, y: o.y ?? H / 2,
                origen: o.origen || '-50%, -50%', entrada: o.entrada || 'escala', actualizar: o.actualizar, fijo: o.fijo,
                color: o.color, linea: o.linea ?? cls === 'etiqueta', quieto: o.quieto ?? !MOVIBLES.has(cls) };
@@ -114,7 +116,7 @@ function sonido(tipo, t, { vol = 1, dur } = {}) { if (t != null) sonidos.push({ 
 // ---------- maquetación: ninguna anotación pisa los subtítulos, otra anotación, los bordes ni los botones de TikTok ----------
 // Las anotaciones de texto (MOVIBLES) se apartan solas lo justo; cajas, círculos y sellos se quedan donde los pone la escena.
 const MOVIBLES = new Set(['etiqueta', 'tarjeta', 'numero', 'texto']);
-const ZONA = { x0: 36, x1: 1044, y0: 210, y1: 1580 };
+const ZONA = { x0: 36, x1: 1044, y0: 210, y1: 1440 };   // por debajo de 1440 lo tapa TikTok (solo ui.nota)
 const BARRA_TIKTOK = { x: 935, y: 1060, w: 145, h: 620, nombre: 'los botones de TikTok' };
 let avisosMaqueta = [];
 function rectDe(o, px, py) {
@@ -136,9 +138,10 @@ const nombreDe = o => `«${o.el.textContent.trim().replace(/\s+/g, ' ').slice(0,
 function pintarOverlays(T) {
   const vivos = [];
   for (const o of overlays) {
-    if (T < o.t || T > o.hasta + 0.3) { o.el.style.display = 'none'; continue; }
+    if (T < o.t || T > o.hasta + 0.2) { o.el.style.display = 'none'; continue; }
     o.el.style.display = '';
-    const pa = clamp((T - o.t) / 0.3), op = Math.min(EASE.sale(pa), clamp((o.hasta - T) / 0.25));
+    // Entra en 0,3 s con ease-out; sale en 0,16 s (las salidas, un 40-50 % más cortas que las entradas).
+    const pa = clamp((T - o.t) / 0.3), op = Math.min(EASE.sale(pa), EASE.entra(clamp((o.hasta + 0.16 - T) / 0.16)));
     o.el.style.opacity = op;
     o.el.style.filter = pa < 1 ? `blur(${(1 - pa) * 7}px)` : '';
     if (o.fijo) { o.actualizar?.(T, pa); continue; }

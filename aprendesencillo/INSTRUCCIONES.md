@@ -8,17 +8,20 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 
 0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. Si `CLAUDE_CODE_EFFORT_LEVEL` no vale `max`, sigue, pero dilo en el resumen final.
 1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), el tipo de gancho y la fórmula de cierre que tocan hoy.
-2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 40 s; los tuyos, 1 minuto).
-3. **Plano de rodaje antes de programar:** en el propio `guiones/<id>.json` añade `"planos"`, una línea por frase: qué enseña la cámara, qué se mueve y qué anotación aparece. Comprueba que cada frase tiene un cambio visual claro y que hay un "momento" fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan.
+2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 36 s; los tuyos, 1 minuto). Fíjate en cómo están escritos `look` y `planos`: con números.
+3. **Plano de rodaje antes de programar, con números y no con adjetivos** («premium», «chulo» o «dinámico» no son instrucciones: un número sí). En el propio `guiones/<id>.json` añade:
+   - `"look"`: una línea con los materiales del objeto principal (cuál de `mat.*`, color en hex y rugosidad) y **un solo** color de acento para las anotaciones.
+   - `"planos"`: una línea por frase con este formato: `CÁMARA de [pos] a [pos], fov N, inOut N s · HÉROE: el único movimiento protagonista, muelle X, N s · SECUNDARIO: lo que acompaña (50-70 % del recorrido, 0,1-0,2 s después) · ANOTACIÓN: cuál y dónde · PASO: cómo enlaza con el plano siguiente (movimiento de cámara continuo o una pieza que se convierte en la siguiente)`.
+   Comprueba que cada frase tiene un cambio visual claro y un «momento» fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan y los números de «Movimiento» de abajo.
 4. **Bucle de crítica** (aquí se gana o se pierde el vídeo):
    1. Saca la previa: `python3 pipeline/make.py guiones/<id>.json --previa` (unos 30 s; la voz queda en caché y no se vuelve a gastar).
-   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto. La **maquetación** lista las anotaciones que pisan algo y no se han podido apartar solas: arréglalas. Y el **coste de render**: segundos por fotograma de cada frase y minutos estimados (a 60 fps). Si alguna frase sale `PESADA` o el total pasa de 48 min, aligérala en esta misma ronda (ver «Rendimiento» abajo): si no, el render baja solo la resolución del 3D y el vídeo se ve peor.
+   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto. Las **transiciones** marcan con `SALTO` los cambios de frase donde la imagen pega un salto. La **maquetación** lista las anotaciones que pisan algo y no se han podido apartar solas: arréglalas. Y el **coste de render**: segundos por fotograma de cada frase y minutos estimados (a 60 fps). Si alguna frase sale `PESADA` o el total pasa de 48 min, aligérala en esta misma ronda (ver «Rendimiento» abajo): si no, el render baja solo la resolución del 3D y el vídeo se ve peor.
    3. Puntúa cada fotograma del 1 al 10 en cuatro cosas:
       - **acabado**: texturas, detalle y formas definidas (biseles que brillan, siluetas que se recortan contra el fondo), nada que parezca de juguete;
       - **composición**: el objeto llena el cuadro y no hay solapes ni nada cortado sin querer;
       - **claridad**: se entiende la idea de esa frase sin audio;
       - **legibilidad**: subtítulos y anotaciones se leen bien.
-   4. Escribe los 3 peores problemas, arréglalos y repite.
+   4. Escribe los 3 peores problemas **con el número de frase** y lo que hay que cambiar en números («frase 6: el diente sale a 0,4 del borde, acércalo a 0,2»), arréglalos y repite. Revisa también la lista de **tópicos prohibidos**: si se ha colado alguno, quítalo. Si la previa marca algún `SALTO`, ese cambio de plano es un corte o algo aparece de golpe: conviértelo en movimiento.
    5. Para cuando todo esté en 8 o más, o tras 3 rondas. Si después tocas algo, saca otra previa antes del render: nada entra en el vídeo sin haberlo visto.
 5. Render y envío (lo que dijo la previa, normalmente 25-40 min): lánzalo **en segundo plano** con el aviso de fallo encadenado y espera a que acabe:
    `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4 || python3 pipeline/enviar.py --aviso "Falló el render o el envío de <id>"`
@@ -100,5 +103,15 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 - Las anotaciones de texto (`etiqueta`, `tarjeta`, `numero`, `texto`) se apartan solas lo justo para no pisar los subtítulos, otra anotación, los bordes ni los botones de TikTok. Cajas, círculos y sellos se quedan donde los pones (`quieto: true` fija también una de texto). Aun así, colócalas bien de entrada: si se apartan mucho, se alejan de lo que señalan.
 
 Colores: cian `#2ee6f0`, azul `#4f7dff`, morado `#a46bff`, amarillo `#ffd23f`, naranja `#ff9b3d`, rojo `#ff4d5e`, verde `#3ddc84`.
+
+**Movimiento** (los números que separan un vídeo de estudio de uno genérico):
+- Curvas: lo que entra, `sale` (ease-out); lo que se va, `entra` y un 40-50 % más corto; lo que cruza la pantalla, `inOut`; `lineal` solo para giros continuos.
+- Muelles: `pesado` (amortiguamiento 1, sin rebote) para piezas grandes; `muelle` (0,85, el aspecto «caro») por defecto; `rapido` (0,75) para piezas pequeñas; `jugueton` (0,5) solo para algo gracioso. La opacidad y el color nunca rebotan: anímalos con curvas.
+- Duraciones: piezas pequeñas 0,2-0,5 s; el movimiento héroe 0,6-0,9 s; la cámara 0,8-1,6 s. Antes de un golpe, 3-4 fotogramas (0,05-0,07 s) de anticipación en sentido contrario.
+- **Un héroe por plano.** Lo secundario recorre el 50-70 % y empieza 0,1-0,2 s después; lo ambiental (menos del 5 %) va en un seno lento y nunca para.
+- Exagera las poses clave un 10-30 %: en el móvil todo se ve pequeño.
+- Las anotaciones que entran a la vez se escalonan solas 90 ms y el sonido ya va un fotograma por detrás de la imagen. Tú sincroniza cada golpe visual con `palabra()`.
+
+**Tópicos prohibidos** (el look genérico de IA): partículas flotando de adorno; resplandor o halos en lo que no emite luz; neón; degradados morados o azules; el objeto girando sobre sí mismo sin motivo; todo apareciendo a la vez; texto que se mueve mientras se lee (una etiqueta pegada a una pieza que se mueve rápido: usa `quieto: true` con `x`/`y`). Tras cada previa, apunta qué tópico se ha colado y quítalo.
 
 **Ritmo**: en cada frase pasa algo (movimiento de cámara, pieza que se mueve, resalte nuevo). Las anotaciones se van al acabar la frase salvo que digas otra cosa; no acumules más de 2-3 a la vez.
