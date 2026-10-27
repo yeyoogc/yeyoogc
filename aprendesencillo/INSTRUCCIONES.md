@@ -6,7 +6,7 @@ Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del obj
 
 ## Pasos
 
-0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. Si `CLAUDE_CODE_EFFORT_LEVEL` no vale `max`, sigue, pero dilo en el resumen final.
+0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. Si `CLAUDE_CODE_EFFORT_LEVEL` no vale `xhigh` ni `max`, sigue, pero dilo en el resumen final.
 1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), el tipo de gancho y la fórmula de cierre que tocan hoy.
 2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 36 s; los tuyos, 1 minuto). Fíjate en cómo están escritos `look` y `planos`: con números.
 3. **Plano de rodaje antes de programar, con números y no con adjetivos** («premium», «chulo» o «dinámico» no son instrucciones: un número sí). En el propio `guiones/<id>.json` añade:
