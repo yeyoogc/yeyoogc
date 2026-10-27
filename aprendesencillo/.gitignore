@@ -1,7 +1,9 @@
 out/
 __pycache__/
-# Lo que genera cada sesión diaria no se guarda (el tema sale de la fecha); solo el ejemplo de referencia.
+# Lo que genera cada sesión diaria no se guarda (el tema sale de la fecha); solo los ejemplos de referencia.
 guiones/*
 !guiones/marcha-atras-120.json
+!guiones/agujero-negro.json
 escenas/*
 !escenas/marcha-atras-120.js
+!escenas/agujero-negro.js

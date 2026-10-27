@@ -49,14 +49,25 @@ export function crearPost({ renderer, escena, camara, W, H, escala, muestras = 0
   });
   const composicion = new THREE.ShaderMaterial({
     uniforms: { ...comunes, tCol, tProf, tA: { value: A1.texture }, tB: { value: B1.texture }, tC: { value: C1.texture }, tE: { value: E1.texture },
-                exposicion: { value: 1 }, resplandor: { value: 0.5 }, px: { value: new THREE.Vector2(1 / w, 1 / h) }, nitidez: { value: 0.6 } },
+                exposicion: { value: 1 }, resplandor: { value: 0.5 }, tono: { value: 0 }, px: { value: new THREE.Vector2(1 / w, 1 / h) }, nitidez: { value: 0.6 } },
     vertexShader: VERT,
-    fragmentShader: `${COC} uniform sampler2D tCol, tProf, tA, tB, tC, tE; uniform float exposicion, resplandor, nitidez; uniform vec2 px; varying vec2 vUv;
+    fragmentShader: `${COC} uniform sampler2D tCol, tProf, tA, tB, tC, tE; uniform float exposicion, resplandor, nitidez, tono; uniform vec2 px; varying vec2 vUv;
       vec3 fit(vec3 v){ vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081; return a / b; }
       vec3 aces(vec3 c){
         const mat3 I = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
         const mat3 O = mat3(vec3(1.60475, -0.10208, -0.00327), vec3(-0.53108, 1.10813, -0.07276), vec3(-0.07367, -0.00605, 1.07602));
         return clamp(O * fit(I * (c * exposicion / 0.6)), 0.0, 1.0);
+      }
+      // Khronos PBR Neutral: comprime solo las luces altas y deja los colores base tal cual (para el estilo ilustrado).
+      vec3 neutro(vec3 c){
+        c *= exposicion;
+        float x = min(c.r, min(c.g, c.b)), off = x < 0.08 ? x - 6.25 * x * x : 0.04;
+        c -= off;
+        float pico = max(c.r, max(c.g, c.b));
+        if (pico < 0.76) return c;
+        float nuevo = 1.0 - 0.0576 / (pico - 0.52);
+        c *= nuevo / pico;
+        return mix(c, vec3(nuevo), 1.0 - 1.0 / (0.15 * (pico - nuevo) + 1.0));
       }
       vec3 srgb(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
       void main(){
@@ -72,7 +83,7 @@ export function crearPost({ renderer, escena, camara, W, H, escala, muestras = 0
         vec3 ca = a.a > 0.02 ? a.rgb / a.a : nit, cb = b.a > 0.02 ? b.rgb / b.a : ca;
         vec3 c = k < 0.5 ? mix(nit, ca, k * 2.0) : mix(ca, cb, k * 2.0 - 1.0);
         c += (texture2D(tC, vUv).rgb * 0.55 + texture2D(tE, vUv).rgb * 0.75) * resplandor;
-        vec3 s = srgb(aces(c));
+        vec3 s = srgb(tono > 0.5 ? clamp(neutro(c), 0.0, 1.0) : aces(c));
         // Franja más oscura bajo los subtítulos (y 250-450) para que se lean sobre cualquier objeto, y viñeta suave.
         float y = (1.0 - vUv.y) * 1920.0;
         s *= 1.0 - 0.5 * (1.0 - smoothstep(470.0, 640.0, y)) * smoothstep(60.0, 240.0, y);
@@ -94,10 +105,10 @@ export function crearPost({ renderer, escena, camara, W, H, escala, muestras = 0
   };
 
   return {
-    render({ foco, apertura, fondo, exposicion = 1, resplandor = 0.5 }) {
+    render({ foco, apertura, fondo, exposicion = 1, resplandor = 0.5, tono = 'aces' }) {
       comunes.cerca.value = camara.near; comunes.lejos.value = camara.far;
       comunes.foco.value = foco; comunes.apertura.value = apertura; comunes.cocFondo.value = fondo;
-      composicion.uniforms.exposicion.value = exposicion; composicion.uniforms.resplandor.value = resplandor;
+      composicion.uniforms.exposicion.value = exposicion; composicion.uniforms.resplandor.value = resplandor; composicion.uniforms.tono.value = tono === 'neutro' ? 1 : 0;
       renderer.setRenderTarget(escenaRT); renderer.render(escena, camara);
       pase(prep, A1);
       borrosa(A1, A1, A2, 2);          // desenfoque A: media resolución

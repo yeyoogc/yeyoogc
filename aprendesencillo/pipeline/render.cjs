@@ -16,7 +16,7 @@ const [, , rutaTimeline, arg2, arg3] = process.argv;
 // Presupuesto de render. Con WebGL por software el coste depende de la escena: si va a tardar más de LIMITE_MIN,
 // el 3D se pinta a menos resolución (los textos siguen nítidos) para quedarse cerca de OBJETIVO_MIN.
 const LIMITE_MIN = 48, OBJETIVO_MIN = 42, ESCALA = 0.75, ESCALA_MIN = 0.5;
-const SALTO = 25;   // diferencia media a partir de la cual hay salto: movimiento continuo 2-17, corte 48-89 (medido en marcha-atras-120)
+const SALTO = 35;   // diferencia media a partir de la cual hay salto: movimiento continuo 2-17, barrido rápido 26-30, corte 48-89
 const FIJO = 0.15;   // s por fotograma que no dependen de la resolución del 3D (captura y textos); medido en marcha-atras-120
 
 // Efectos de sonido sintetizados con ffmpeg (sin archivos de audio de terceros). nivel = volumen bajo la voz.

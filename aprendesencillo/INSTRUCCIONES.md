@@ -2,13 +2,13 @@
 
 Hay dos sesiones al día: **turno 0** (mañana) y **turno 1** (tarde). El mensaje que te lanza dice cuál eres. Cada una deja en el Telegram de Yeyo **un** TikTok de 1 minuto a 60 fps, listo para publicar en la hora punta siguiente.
 
-Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del objeto o del concepto que cambia en cada frase, con anotaciones precisas y subtítulos arriba. No explores el repo: lee solo lo que se indica aquí.
+Cada vídeo es una explicación animada **hecha a medida**, en **estilo 3D ilustrado** (el de los vídeos que Yeyo toma como referencia): mundos enteros estilizados (cielo con degradado, suelo, niebla), personas estilizadas sin cara, multitudes de cientos de figuras para dar escala a las cifras, colores planos y vivos, luces que brillan, cifras en píldora y metáforas visuales para cada dato. La cámara recorre ese mundo y en cada frase cambia algo, con subtítulos arriba. No explores el repo: lee solo lo que se indica aquí.
 
 ## Pasos
 
 0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. Si `CLAUDE_CODE_EFFORT_LEVEL` no vale `xhigh` ni `max`, sigue, pero dilo en el resumen final.
 1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), el tipo de gancho y la fórmula de cierre que tocan hoy.
-2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 36 s; los tuyos, 1 minuto). Fíjate en cómo están escritos `look` y `planos`: con números.
+2. Mira `referencia/agujero-negro-previa.jpg` (el listón de calidad) y lee `escenas/agujero-negro.js` y `guiones/agujero-negro.json`: son el ejemplo del estilo ilustrado, de la API y de cómo se escriben `look` y `planos` (con números). Si tu tema es un objeto técnico suelto (una cerradura, una caja de cambios), mira también el ejemplo de producto: `referencia/marcha-atras-120-previa.jpg` y `escenas/marcha-atras-120.js`.
 3. **Plano de rodaje antes de programar, con números y no con adjetivos** («premium», «chulo» o «dinámico» no son instrucciones: un número sí). En el propio `guiones/<id>.json` añade:
    - `"look"`: una línea con los materiales del objeto principal (cuál de `mat.*`, color en hex y rugosidad) y **un solo** color de acento para las anotaciones.
    - `"planos"`: una línea por frase con este formato: `CÁMARA de [pos] a [pos], fov N, inOut N s · HÉROE: el único movimiento protagonista, muelle X, N s · SECUNDARIO: lo que acompaña (50-70 % del recorrido, 0,1-0,2 s después) · ANOTACIÓN: cuál y dónde · PASO: cómo enlaza con el plano siguiente (movimiento de cámara continuo o una pieza que se convierte en la siguiente)`.
@@ -62,28 +62,40 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 | `camara.deriva(v, {t, dur})` | vaivén lento de la cámara para que el plano nunca esté muerto (1 por defecto, 0 = trípode, 2 = cámara en mano suave). Ponlo a 0 en los macros donde la precisión importa |
 | `fondo.ponerBrillo(hex, a)` / `fondo.brillo(hex, {t, dur, a})` | color del resplandor del fondo |
 
-**3D** (esto es lo que marca la diferencia: tiene que parecer un render de producto, no un dibujo):
+**Estilo ilustrado** (lo que marca la diferencia):
+- **Un mundo, no un objeto flotando en negro**: `mundo(nombre)` pone cielo con degradado, niebla, suelo y la luz de ese ambiente. Nombres: `atardecer`, `dia`, `noche` (ciudad, morados), `espacio` (estrellas), `estadio` (morado con focos), `azul` (tecnología, azul marino, sin suelo). `mundo(nombre, {t})` cambia de mundo en ese instante (corte entre secciones). Sin `mundo`, queda el estudio oscuro de producto: solo para objetos técnicos sueltos.
+- **Personas**: `persona({ropa, pantalon, piel, pelo, sombrero, traje: 'astronauta', poses: [[t, 'quieto'], [t2, 'andar']], reloj})` devuelve un grupo (mide 1,8; los pies en y = 0) con poses `quieto`, `andar`, `animar` (brazos arriba), `trabajar`, `flotar`, `senalar`; las piezas están en `p.userData.partes` (`cab`, `torso`, `hI`/`hD` hombros, `cI`/`cD` caderas) para anclar etiquetas o moverlas. Escálala o estírala con `p.scale`. **Nunca construyas una persona a mano** con cápsulas sueltas: usa esta (o `multitud`).
+- **Multitudes y escala**: `multitud({n, centro, area: [ancho, fondo], pose, colores, sombrero, escala, mirar: [x, z]})` dibuja cientos o miles de personas por muy poco. Úsala para que las cifras se sientan («35 millones de agricultores» = un campo lleno hasta el horizonte). `repetir({geometria, material, filas, columnas, paso: [dx, dz], centro, escala, alto, girar})` repite cualquier pieza (plantas, butacas, edificios, trofeos); `.aparecer(t, dur)` la hace crecer de cerca a lejos.
+- **Metáforas visuales para cada dato**: un bote que se llena, una balanza que se inclina, tubos llenos de bolas que comparan dos cifras, una fila de trofeos que forma un camino, una gráfica que cae. Cada cifra importante, en `ui.cifra`.
+- **Luz que brilla**: en este estilo sí van focos, neón, LEDs y resplandor: `foco({desde, hacia, color, ancho})` (haz de luz visible), `mat.emisivo(color)` y `dof.resplandor`.
+- **Colores planos**: `mat.plano(color)` (sombreado suave; `{duro: true}` en bandas; `{emisivo: 0.8}` brilla) para el mundo, la gente y las piezas de decorado. Los `mat.*` realistas (metal, oro, vidrio) solo en el objeto protagonista.
+- **Encuadre vertical**: lo alto y estrecho llena la pantalla. Las caídas, los estirones y las personas, de pie y en vertical; nunca un objeto largo tumbado en horizontal.
+- `mirarCamara(obj)`: que algo mire siempre a cámara (anillos, halos, carteles).
+
+**3D**:
 - `THREE` completo y `escena`.
 - Materiales: `mat.metal(color, rugosidad)` (cepillado), `mat.metalPulido()`, `mat.oro()`, `mat.laton()`, `mat.plastico(color, rugosidad)`, `mat.goma()`, `mat.vidrio(color, opacidad)`, `mat.emisivo(color)`, `mat.madera(rx, ry)`, `mat.hormigon(rx, ry)` y `mat.pintado((ctx2d, w, h) => …)` para rótulos, escalas, pantallas, patrones o placas.
 - Geometrías: `geo.caja(w, h, d, radio)` (redondeada), `geo.extruir(shape, grosor, bisel)`, `geo.torno([[radio, altura], …])` (pomos, botellas, latas, bombillas), `geo.engranaje(dientes, radio, grosor, {aligerado, sinDiente})`, `geo.diente(...)`, `geo.ejeEstriado(radio, largo)`, y cualquier primitiva de THREE.
 - Rendimiento (el render es por CPU, sin tarjeta gráfica): lo que más cuesta es lo que llena la pantalla y las pasadas de sombra. Una `PointLight` o `SpotLight` con `castShadow` vuelve a pintar la escena (6 veces la PointLight): para dar ambiente usa luces sin sombra, `mat.emisivo` o `halo`. Piezas repetidas (traviesas, tornillos, dientes sueltos): `THREE.InstancedMesh`, no cientos de mallas. Cilindros y toros con 32-64 segmentos bastan a este tamaño. Lo que ya no sale en cuadro, `visible = false`.
 - Ayudantes: `bordes(malla, {color})` (aristas iluminadas, para cristales y piezas fantasma), `halo(obj, {color, tam})` (resplandor; anima `halo.material.opacity`), `suelo({y})` (recibe sombras), `sombras({centro, tam})` (zona que cubre la luz que da sombra; si la escena salta de sitio, llámalo dentro de `cada`).
 - Profundidad de campo: enfoca solo el punto al que mira la cámara. `dof.apertura` (1 suave, 2,5 macro) y `dof.foco` (0 = automático). `dof.resplandor` (0,5 por defecto) hace brillar emisivos y reflejos fuertes: súbelo para un fogonazo o un LED, bájalo si el plano se ve lechoso. Anímalo todo con `tween(dof, …)`.
-- Luz: el motor ya trae un estudio fotográfico (luz principal con sombra, contraluz y cajas de luz alargadas que se reflejan en el metal y dibujan los cantos). No añadas luces para «iluminar más»: si algo sale oscuro, gíralo hacia la luz o cambia el ángulo de cámara.
+- Luz: el motor ya trae la luz principal con sombra, contraluz y unas cajas de luz que se reflejan en el metal y dibujan los cantos; `mundo()` la ajusta a cada ambiente. No añadas luces para «iluminar más»: si algo sale oscuro, gíralo hacia la luz o cambia el ángulo de cámara.
 - Calidad mínima:
-  - **Nunca modeles personas ni animales enteros** con cápsulas y esferas: quedan como muñecos de plastilina y hunden el vídeo. Si el tema va de una persona o un animal, cuéntalo con **objetos** reconocibles (un casco, un reloj, un termómetro, una herramienta, la pieza concreta), con un esquema de cristal con aristas iluminadas (`mat.vidrio` + `bordes`) o con cifras y anotaciones; como mucho una parte (una mano, un ojo), nunca un cuerpo entero.
+  - Si el tema va de una persona, **sale la persona** (`persona`), no una pieza suelta que la represente: un astronauta es un astronauta entero, no una bota con un casco. Animales: estilizados y simples (formas redondeadas, colores planos, sin cara realista), en la línea de las personas; si no queda claro, cuéntalo con objetos y cifras.
   - Modela el objeto real con sus detalles (biseles, tornillos, estrías, rótulos, texturas), no un bloque genérico.
   - **Formas definidas**: nada de `BoxGeometry` ni cilindros a pelo en piezas que se ven de cerca: usa `geo.caja` (canto redondeado), `geo.extruir` con bisel o `geo.torno`, porque los biseles son lo que pilla las cajas de luz y hace que la pieza se lea. Nada de superficies grandes lisas de un solo color: dales textura (`mat.metal`, `mat.plastico`, `mat.pintado`). Una pieza rota o suelta se modela con su forma real (un diente con su perfil, una esquirla con `geo.extruir`), no con un cubo rojo.
   - El render siempre sale en vertical 1080×1920: no toques `pipeline/`.
   - Planos macro: el objeto llena el ancho y puede salirse un poco del cuadro.
-  - Fondo oscuro: nada de planos grandes y claros detrás, porque lavan la imagen y se dejan de leer los subtítulos.
-  - Transiciones con cámara en movimiento continuo (bajar al interior, barrido lateral), no cortes.
+  - Que no lave la imagen: un cielo claro (`dia`) está bien, pero el objeto protagonista tiene que contrastar con él, y la franja de los subtítulos ya se oscurece sola.
+  - Dentro de una sección, transiciones con cámara en movimiento continuo (bajar al interior, barrido lateral). Entre secciones (de 2 a 3 por vídeo, p. ej. al cambiar de mundo) vale un corte con `sonido('whoosh', t)`: la previa los marcará como `SALTO` y está bien si son esos.
 
 **Anotaciones** (HTML encima del 3D). Todas aceptan `t`, `hasta` (por defecto, el final de la frase), y una posición: `ancla` (un objeto 3D o `[x,y,z]`) con `offset`, o `x`/`y` en píxeles (lienzo de 1080×1920).
 
 | función | qué es |
 |---|---|
-| `ui.numero({texto, unidad, tam})` | cifra gigante en monoespaciada con dígitos de colores; `texto` puede ser `t => …` para un contador |
+| `ui.cifra({texto, unidad, tam})` | **la cifra del estilo ilustrado**: número grande en una píldora oscura («200» + «millones»). `texto` puede ser `t => …` para un contador |
+| `ui.grafica({puntos, color, x, y, w, h, dur})` | gráfica de línea que se dibuja sola con un punto brillante en la punta (`puntos`: valores, se escalan solos) |
+| `ui.numero({texto, unidad, tam})` | cifra gigante en monoespaciada con dígitos de colores (estilo producto) |
 | `ui.etiqueta(texto, {color})` | valor corto ("0 rpm", "hueco 0,01"). Si queda lejos de su `ancla`, sale sola una línea guía con un punto sobre la pieza (`linea: false` la quita) |
 | `ui.caja({w, h, rotulo, color})` / `ui.circulo({r, color})` | resaltar una pieza |
 | `ui.giro({r, sentido: 'horario'/'antihorario', color})` | flecha circular de giro |
@@ -112,6 +124,6 @@ Colores: cian `#2ee6f0`, azul `#4f7dff`, morado `#a46bff`, amarillo `#ffd23f`, n
 - Exagera las poses clave un 10-30 %: en el móvil todo se ve pequeño.
 - Las anotaciones que entran a la vez se escalonan solas 90 ms y el sonido ya va un fotograma por detrás de la imagen. Tú sincroniza cada golpe visual con `palabra()`.
 
-**Tópicos prohibidos** (el look genérico de IA): partículas flotando de adorno; resplandor o halos en lo que no emite luz; neón; degradados morados o azules; el objeto girando sobre sí mismo sin motivo; todo apareciendo a la vez; texto que se mueve mientras se lee (una etiqueta pegada a una pieza que se mueve rápido: usa `quieto: true` con `x`/`y`). Tras cada previa, apunta qué tópico se ha colado y quítalo.
+**Tópicos prohibidos**: un objeto suelto flotando en negro cuando el tema tiene un lugar (usa `mundo`); personas hechas a mano con cápsulas, o una pieza suelta en lugar de la persona; partículas flotando de adorno; resplandor en lo que no emite luz; el objeto girando sobre sí mismo sin motivo; todo apareciendo a la vez; texto que se mueve mientras se lee (una etiqueta pegada a una pieza que se mueve rápido: usa `quieto: true` con `x`/`y`). Tras cada previa, apunta qué tópico se ha colado y quítalo.
 
 **Ritmo**: en cada frase pasa algo (movimiento de cámara, pieza que se mueve, resalte nuevo). Las anotaciones se van al acabar la frase salvo que digas otra cosa; no acumules más de 2-3 a la vez.

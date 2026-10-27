@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { entornoVacio } from './entorno.js';
 import { crearPost } from './post.js';
 import { mat, geo, bordes, halo, azar } from './materiales.js';
+import { crearEstilo } from './estilo.js';
 
 const W = 1080, H = 1920;
 const $ = id => document.getElementById(id);
@@ -27,7 +28,8 @@ const camPos = new THREE.Vector3(0, 0, 8), camMira = new THREE.Vector3(), camFov
 const brillo = { r: 255, g: 170, b: 60, a: 0.2 };
 // Profundidad de campo: foco 0 = automático (enfoca el punto al que mira la cámara). fondo: desenfoque del fondo (0-1).
 // resplandor: cuánto brillan los emisivos y los reflejos fuertes (0 = nada).
-const dof = { apertura: 1.3, foco: 0, fondo: 0, exposicion: 1, resplandor: 0.5 };
+// tono: 'aces' (render de producto) o 'neutro' (respeta los colores planos del estilo ilustrado; lo pone mundo()).
+const dof = { apertura: 1.3, foco: 0, fondo: 0, exposicion: 1, resplandor: 0.5, tono: 'aces' };
 // Deriva: la cámara nunca está del todo quieta (un vaivén lento, proporcional a la distancia). 0 = trípode.
 const deriva = { v: 1 };
 const tmp = new THREE.Vector3();
@@ -105,7 +107,7 @@ function overlay(html, cls, o = {}) {
                origen: o.origen || '-50%, -50%', entrada: o.entrada || 'escala', actualizar: o.actualizar, fijo: o.fijo,
                color: o.color, linea: o.linea ?? cls === 'etiqueta', quieto: o.quieto ?? !MOVIBLES.has(cls) };
   overlays.push(ov);
-  const efecto = { etiqueta: 'pop', caja: 'pop', circulo: 'pop', giro: 'pop', tarjeta: 'pop', numero: 'pop', texto: 'pop', flecha: 'pop', sello: 'golpe' }[cls];
+  const efecto = { etiqueta: 'pop', caja: 'pop', circulo: 'pop', giro: 'pop', tarjeta: 'pop', numero: 'pop', cifra: 'pop', grafica: 'pop', texto: 'pop', flecha: 'pop', sello: 'golpe' }[cls];
   if (efecto) sonido(efecto, t);
   return ov;
 }
@@ -115,7 +117,7 @@ function sonido(tipo, t, { vol = 1, dur } = {}) { if (t != null) sonidos.push({ 
 
 // ---------- maquetación: ninguna anotación pisa los subtítulos, otra anotación, los bordes ni los botones de TikTok ----------
 // Las anotaciones de texto (MOVIBLES) se apartan solas lo justo; cajas, círculos y sellos se quedan donde los pone la escena.
-const MOVIBLES = new Set(['etiqueta', 'tarjeta', 'numero', 'texto']);
+const MOVIBLES = new Set(['etiqueta', 'tarjeta', 'numero', 'cifra', 'texto']);
 const ZONA = { x0: 36, x1: 1044, y0: 210, y1: 1440 };   // por debajo de 1440 lo tapa TikTok (solo ui.nota)
 const BARRA_TIKTOK = { x: 935, y: 1060, w: 145, h: 620, nombre: 'los botones de TikTok' };
 let avisosMaqueta = [];
@@ -203,6 +205,33 @@ const ui = {
         (unidad ? `<span class="uni">${esc(unidad)}</span>` : '');
     };
     pintar(o.t ?? 0); const prev = ov.actualizar; ov.actualizar = (T, ...r) => { pintar(T); prev?.(T, ...r); };
+    return ov;
+  },
+  // Cifra en píldora oscura (el estilo de las referencias: «200 millones»). texto puede ser t => … para un contador.
+  cifra({ texto, unidad = '', tam = 120, color, ...o }) {
+    const ov = overlay('', 'cifra', o); ov.el.style.setProperty('--tam', `${tam}px`);
+    let ultimo = null;
+    const pintar = T => {
+      const s = typeof texto === 'function' ? texto(T) : String(texto);
+      if (s === ultimo) return; ultimo = s;
+      ov.el.innerHTML = `<span class="n"${color ? ` style="color:${color}"` : ''}>${esc(s)}</span>${unidad ? `<span class="u">${esc(unidad)}</span>` : ''}`;
+    };
+    pintar(o.t ?? 0); const prev = ov.actualizar; ov.actualizar = (T, ...r) => { pintar(T); prev?.(T, ...r); };
+    return ov;
+  },
+  // Gráfica de línea que se dibuja sola en dur segundos, con un punto brillante en la punta. puntos: valores (se escalan solos).
+  grafica({ puntos, color = '#ff4d5e', w = 860, h = 480, x = 540, y = 880, dur = 1.4, grosor = 7, ...o }) {
+    const min = Math.min(...puntos), max = Math.max(...puntos), n = puntos.length;
+    const pts = puntos.map((v, i) => [x - w / 2 + (i / (n - 1)) * w, y + h / 2 - ((v - min) / (max - min || 1)) * h]);
+    const ov = overlay(`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible"><polyline fill="none" stroke="${color}" stroke-width="${grosor}" stroke-linejoin="round" stroke-linecap="round"
+      points="${pts.map(p => p.join(',')).join(' ')}" pathLength="1" stroke-dasharray="1 1" style="filter:drop-shadow(0 0 10px ${color})"/>
+      <circle r="11" fill="${color}" style="filter:drop-shadow(0 0 14px ${color})"/></svg>`, 'grafica', { ...o, fijo: true });
+    const linea = ov.el.querySelector('polyline'), punto = ov.el.querySelector('circle');
+    ov.actualizar = T => {
+      const k = EASE.inOut(clamp((T - ov.t) / dur)), f = k * (n - 1), i = Math.min(n - 2, Math.floor(f)), r = f - i;
+      linea.setAttribute('stroke-dashoffset', 1 - k);
+      punto.setAttribute('cx', lerp(pts[i][0], pts[i + 1][0], r)); punto.setAttribute('cy', lerp(pts[i][1], pts[i + 1][1], r));
+    };
     return ov;
   },
   tarjeta({ titulo, valor, acento, ...o }) {
@@ -395,8 +424,10 @@ window.iniciar = async datos => {
   sol.shadow.mapSize.set(1024, 1024); sol.shadow.radius = 4; sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02;
   escena.add(sol, sol.target);
   const contra = new THREE.DirectionalLight(0x9fd8ff, 1.3); contra.position.set(-5, 3, -4); escena.add(contra);
+  let dirSol = new THREE.Vector3(3, 6, 5).normalize(), ultimaSombra = {};
   const sombras = ({ centro = [0, 0, 0], tam = 5 } = {}) => {
-    sol.target.position.set(...centro); sol.position.set(centro[0] + 3, centro[1] + 6, centro[2] + 5);
+    ultimaSombra = { centro, tam };
+    sol.target.position.set(...centro); sol.position.set(...centro).addScaledVector(dirSol, 8.4);
     Object.assign(sol.shadow.camera, { left: -tam, right: tam, top: tam, bottom: -tam, near: 0.5, far: 30 }); sol.shadow.camera.updateProjectionMatrix();
   };
   sombras();
@@ -404,8 +435,14 @@ window.iniciar = async datos => {
   post = crearPost({ renderer, escena, camara, W, H, escala, muestras: D.muestras ?? 0 });
   window.depurar = { renderer, escena };   // para perfilar desde fuera
 
+  const estilo = crearEstilo({ escena, camara, sol, fondo: fondoMalla, motas, cada: fn => cada.push(fn),
+    ponerDirSol: d => { dirSol = d; sombras(ultimaSombra); }, ponerTono: t => { dof.tono = t; } });
+  mat.plano = estilo.plano;
   const ctx = {
     THREE, escena, renderer, dur: D.duracion, frases: D.frases,
+    mundo: estilo.mundo, persona: estilo.persona, multitud: estilo.multitud, repetir: estilo.repetir, foco: estilo.foco,
+    // Que un objeto mire siempre a la cámara (anillos, halos, carteles). Se orienta justo antes de pintarse, ya con la cámara colocada.
+    mirarCamara: obj => { obj.onBeforeRender = (r, s, cam) => { obj.lookAt(cam.position); obj.updateMatrixWorld(); }; return obj; },
     f: i => D.frases[i].inicio,
     fin: i => D.frases[i].fin,
     palabra: (i, texto) => { const p = D.frases[i].palabras.find(p => norm(p.w).startsWith(norm(texto))); return p ? p.t : D.frases[i].inicio; },
@@ -448,7 +485,7 @@ window.pintar = T => {
   escena.updateMatrixWorld(); camara.updateMatrixWorld();
   pintarFondo(T);
   motas.material.uniforms.T.value = T;
-  post.render({ foco: dof.foco > 0 ? dof.foco : dist, apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion, resplandor: dof.resplandor });
+  post.render({ foco: dof.foco > 0 ? dof.foco : dist, apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion, resplandor: dof.resplandor, tono: dof.tono });
   pintarOverlays(T); pintarFx(T); pintarSubs(T);
 };
 // Para la previa: lo que más pesa en el render por software (cuenta lo visible en el instante pintado).
