@@ -8,15 +8,15 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const FPS = 30;
+const FPS = 60;
 const RAIZ = path.join(__dirname, '..');
 const TIPOS = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.jpg': 'image/jpeg' };
 const [, , rutaTimeline, arg2, arg3] = process.argv;
 
 // Presupuesto de render. Con WebGL por software el coste depende de la escena: si va a tardar más de LIMITE_MIN,
 // el 3D se pinta a menos resolución (los textos siguen nítidos) para quedarse cerca de OBJETIVO_MIN.
-const LIMITE_MIN = 35, OBJETIVO_MIN = 28, ESCALA = 0.75, ESCALA_MIN = 0.5;
-const FIJO = 0.28;   // s por fotograma que no dependen de la resolución del 3D (captura, textos, FXAA); medido en marcha-atras-120
+const LIMITE_MIN = 48, OBJETIVO_MIN = 42, ESCALA = 0.75, ESCALA_MIN = 0.5;
+const FIJO = 0.15;   // s por fotograma que no dependen de la resolución del 3D (captura y textos); medido en marcha-atras-120
 
 // Efectos de sonido sintetizados con ffmpeg (sin archivos de audio de terceros). nivel = volumen bajo la voz.
 const EFECTOS = {
@@ -67,14 +67,17 @@ async function abrir(navegador, puerto, timeline) {
   await pagina.goto(`http://127.0.0.1:${puerto}/pipeline/motor/index.html`);
   await pagina.waitForFunction(() => window.motorListo, null, { timeout: 30000 });
   await pagina.evaluate(d => window.iniciar(d), timeline);
+  pagina.cdp = await pagina.context().newCDPSession(pagina);   // captura directa por CDP: más rápida que page.screenshot
   return pagina;
 }
 
 // La GPU por software trabaja al capturar, así que se mide pintar + captura.
-async function captura(pagina, t, opciones = {}) {
+async function captura(pagina, t, { calidad = 94, ruta } = {}) {
   const a = Date.now();
   await pagina.evaluate(t => window.pintar(t), t);
-  const jpg = await pagina.screenshot({ type: 'jpeg', quality: 92, ...opciones });
+  const { data } = await pagina.cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: calidad, optimizeForSpeed: true });
+  const jpg = Buffer.from(data, 'base64');
+  if (ruta) fs.writeFileSync(ruta, jpg);
   return { jpg, s: (Date.now() - a) / 1000 };
 }
 // Segundos por fotograma en t, en una segunda pasada para no contar la compilación de shaders de lo que aparece por primera vez.
@@ -90,12 +93,13 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
 
   if (arg2 === '--previa') {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'previa-'));
-    const tiempos = timeline.frases.map(f => (f.inicio + f.fin) / 2), costes = [], lineas = [];
+    const tiempos = timeline.frases.map(f => (f.inicio + f.fin) / 2), costes = [], lineas = [], maqueta = [];
     for (const [i, t] of tiempos.entries()) {
-      await captura(pagina, t, { quality: 85, path: path.join(dir, `${String(i).padStart(2, '0')}.jpg`) });
+      await captura(pagina, t, { calidad: 85, ruta: path.join(dir, `${String(i).padStart(2, '0')}.jpg`) });
       const st = await pagina.evaluate(() => window.estadisticas());
+      for (const a of await pagina.evaluate(() => window.maquetacion())) maqueta.push(`    frase ${String(i).padStart(2)}: ${a}`);
       costes.push((await captura(pagina, t)).s);
-      lineas.push(`    frase ${String(i).padStart(2)}: ${costes[i].toFixed(2)} s/fotograma · ${st.mallas} mallas (${st.sombras} con sombra) · ${Math.round(st.tri / 1000)} mil triángulos · ${st.luces} luces (${st.lucesSombra} pasadas de sombra)${costes[i] > 1.2 ? '  ← PESADA' : ''}`);
+      lineas.push(`    frase ${String(i).padStart(2)}: ${costes[i].toFixed(2)} s/fotograma · ${st.mallas} mallas (${st.sombras} con sombra) · ${Math.round(st.tri / 1000)} mil triángulos · ${st.luces} luces (${st.lucesSombra} pasadas de sombra)${costes[i] > 0.85 ? '  ← PESADA' : ''}`);
     }
     // Copia de cada fotograma suelto (para mirarlos a tamaño real y medirlos en make.py).
     const sueltos = arg3.replace(/\.jpg$/, '');
@@ -106,7 +110,8 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
     const est = estimar(timeline, costes);
-    console.log(`  coste de render (objetivo: todas por debajo de 1,2 s/fotograma):\n${lineas.join('\n')}`);
+    console.log(`  maquetación (las anotaciones de texto ya se apartan solas; esto es lo que no se pudo resolver):\n${maqueta.length ? maqueta.join('\n') : '    sin problemas'}`);
+    console.log(`  coste de render (objetivo: todas por debajo de 0,85 s/fotograma):\n${lineas.join('\n')}`);
     console.log(`  render estimado: ${Math.round(est)} min` + (est > LIMITE_MIN
       ? ` → DEMASIADO: el render bajaría la resolución del 3D. Aligera las frases PESADAS (menos luces con sombra: cada PointLight con sombra pinta la escena 6 veces; InstancedMesh para piezas repetidas; menos segmentos; quita lo que no se ve).`
       : ''));
@@ -129,7 +134,7 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
       '-y', '-loglevel', 'error',
       '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
       '-i', audio, '-map', '0:v', '-map', '1:a',
-      '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p', '-r', String(FPS),
+      '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-maxrate', '5500k', '-bufsize', '11000k', '-profile:v', 'high', '-level', '4.2', '-pix_fmt', 'yuv420p', '-r', String(FPS),
       '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', arg3,
     ], { stdio: ['pipe', 'inherit', 'inherit'] });
     const terminado = new Promise((ok, ko) => ffmpeg.on('close', c => (c === 0 ? ok() : ko(new Error(`ffmpeg salió con ${c}`)))));

@@ -25,12 +25,11 @@
   #capa { pointer-events: none; }
 
   /* subtítulos: frase corta arriba, palabras clave en blanco y la palabra activa con caja de selección */
-  #subs { top: 250px; bottom: auto; left: 50px; right: 50px; text-align: center; font-size: 82px; line-height: 1.22; letter-spacing: -1.5px; text-shadow: 0 3px 22px rgba(0,0,0,.6); }
-  #subs .p { position: relative; display: inline-block; margin: 0 9px; color: rgba(255,255,255,.52); font-weight: 500; }
+  #subs { top: 250px; bottom: auto; left: 50px; right: 50px; text-align: center; font-size: 82px; line-height: 1.22; letter-spacing: -1.5px; text-shadow: 0 3px 22px rgba(0,0,0,.6); text-wrap: balance; }
+  #subs .p { position: relative; z-index: 1; display: inline-block; margin: 0 9px; color: rgba(255,255,255,.52); font-weight: 500; }
   #subs .p.clave { color: var(--texto); font-weight: 800; }
   #subs .p.activa { color: var(--texto); }
-  #subs .sel { display: none; position: absolute; inset: 4px -10px 0 -10px; border: 3px solid var(--azul-sel); background: rgba(77,141,255,.14); }
-  #subs .activa .sel { display: block; }
+  #subs .sel { position: absolute; border: 3px solid var(--azul-sel); background: rgba(77,141,255,.14); }
   #subs .sel b { position: absolute; width: 14px; height: 14px; background: #fff; border: 3px solid var(--azul-sel); }
   #subs .sel b:nth-child(1) { left: -9px; top: -9px; } #subs .sel b:nth-child(2) { right: -9px; top: -9px; }
   #subs .sel b:nth-child(3) { left: -9px; bottom: -9px; } #subs .sel b:nth-child(4) { right: -9px; bottom: -9px; }
@@ -76,7 +75,7 @@
 <body>
   <canvas id="webgl"></canvas>
   <canvas id="fx" width="1080" height="1920"></canvas>
-  <div id="capa"></div>
+  <div id="capa"><svg id="guias" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;overflow:visible"></svg></div>
   <div id="subs"></div>
   <script type="module" src="motor.js"></script>
 </body>

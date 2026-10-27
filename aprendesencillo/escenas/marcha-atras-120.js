@@ -159,7 +159,7 @@ export default function crear(ctx) {
   tween(dof, { exposicion: 1 }, { t: f(7), dur: 0.6 });
   tween(B.position, { z: 0.05 }, { t: tp - 0.25, dur: 0.2, ease: 'entra' });
   color(matDiente.color, 0xff4d5e, { t: tp - 0.1, dur: 0.2 });
-  tween(matDiente, { emissiveIntensity: 0.9 }, { t: tp - 0.1, dur: 0.2 });
+  tween(matDiente, { emissiveIntensity: 0.45 }, { t: tp - 0.1, dur: 0.2 });
   tween(diente.position, { x: -0.5, y: 0.45, z: 2.6 }, { t: tp + 0.1, dur: 1.3, ease: 'sale' });
   tween(diente.rotation, { x: 6, y: 3, z: 8 }, { t: tp + 0.1, dur: 1.3, ease: 'sale' });
   fx.chispas({ ancla: contacto, t: tp, dur: 0.35, n: 70, semilla: 9 });

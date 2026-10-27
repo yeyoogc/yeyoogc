@@ -16,6 +16,7 @@ token = os.environ.get("TELEGRAM_BOT_TOKEN")
 if not token:
     sys.exit("Falta TELEGRAM_BOT_TOKEN en el entorno.")
 API = f"https://api.telegram.org/bot{token}"
+LIMITE = 49 * 1024 * 1024
 
 
 def descubrir_chat():
@@ -42,6 +43,15 @@ elif len(sys.argv) < 2:
 else:
     for mp4 in map(Path, sys.argv[1:]):
         texto = mp4.with_suffix(".txt").read_text(encoding="utf-8")[:1024]
+        # Los bots de Telegram no aceptan archivos de más de 50 MB: si se pasa, se recomprime a la medida.
+        if mp4.stat().st_size > LIMITE:
+            dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(mp4)]))
+            kbps = int(LIMITE * 0.92 * 8 / 1000 / dur) - 192
+            ligero = mp4.with_suffix(".tg.mp4")
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(mp4), "-c:v", "libx264", "-preset", "medium", "-b:v", f"{kbps}k",
+                            "-maxrate", f"{kbps}k", "-bufsize", f"{2 * kbps}k", "-pix_fmt", "yuv420p", "-c:a", "copy", "-movflags", "+faststart", str(ligero)], check=True)
+            print(f"{mp4.name} pesaba {mp4.stat().st_size >> 20} MB: recomprimido a {ligero.stat().st_size >> 20} MB para Telegram")
+            mp4 = ligero
         # Sin medidas ni miniatura, Telegram a veces enseña el vídeo achatado (como si fuera 4:3 o cuadrado).
         info = json.loads(subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:format=duration", "-of", "json", str(mp4)]))
         ancho, alto, dur = info["streams"][0]["width"], info["streams"][0]["height"], round(float(info["format"]["duration"]))

@@ -146,7 +146,7 @@ def construir_timeline(guion, chars, tiempos, total):
         grupo = []
         for t in f["palabras"]:
             grupo.append(t)
-            if t["w"].endswith(PUNTUACION_FINAL) or len(grupo) >= 5 or sum(len(x["w"]) + 1 for x in grupo) >= 24:
+            if t["w"].endswith(PUNTUACION_FINAL) or len(grupo) >= 4 or sum(len(x["w"]) + 1 for x in grupo) >= 22:
                 subs.append(grupo)
                 grupo = []
         if grupo:

@@ -1,26 +1,26 @@
 # Sesión programada de @aprendesencillo
 
-Hay dos sesiones al día: **turno 0** (mañana) y **turno 1** (tarde). El mensaje que te lanza dice cuál eres. Cada una deja en el Telegram de Yeyo **un** TikTok de 1 minuto, listo para publicar en la hora punta siguiente.
+Hay dos sesiones al día: **turno 0** (mañana) y **turno 1** (tarde). El mensaje que te lanza dice cuál eres. Cada una deja en el Telegram de Yeyo **un** TikTok de 1 minuto a 60 fps, listo para publicar en la hora punta siguiente.
 
 Cada vídeo es una explicación animada **hecha a medida**: un modelo 3D del objeto o del concepto que cambia en cada frase, con anotaciones precisas y subtítulos arriba. No explores el repo: lee solo lo que se indica aquí.
 
 ## Pasos
 
-0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es.
-1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`).
+0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. Si `CLAUDE_CODE_EFFORT_LEVEL` no vale `max`, sigue, pero dilo en el resumen final.
+1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), el tipo de gancho y la fórmula de cierre que tocan hoy.
 2. Mira `referencia/marcha-atras-120-previa.jpg` (el listón de calidad) y lee `escenas/marcha-atras-120.js` y `guiones/marcha-atras-120.json`: son el ejemplo del estilo, del nivel de detalle y de la API (ese dura 40 s; los tuyos, 1 minuto).
 3. **Plano de rodaje antes de programar:** en el propio `guiones/<id>.json` añade `"planos"`, una línea por frase: qué enseña la cámara, qué se mueve y qué anotación aparece. Comprueba que cada frase tiene un cambio visual claro y que hay un "momento" fuerte cada 3-5 s. Después escribe `escenas/<id>.js` siguiendo ese plan.
 4. **Bucle de crítica** (aquí se gana o se pierde el vídeo):
    1. Saca la previa: `python3 pipeline/make.py guiones/<id>.json --previa` (unos 30 s; la voz queda en caché y no se vuelve a gastar).
-   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto. Y el **coste de render**: segundos por fotograma de cada frase y minutos estimados. Si alguna frase sale `PESADA` o el total pasa de 35 min, aligérala en esta misma ronda (ver «Rendimiento» abajo): si no, el render baja solo la resolución del 3D y el vídeo se ve peor.
+   2. Mira `out/<id>-previa.jpg` (un fotograma a mitad de cada frase) al lado de `referencia/marcha-atras-120-previa.jpg`. Los fotogramas sueltos, a tamaño real, están en `out/<id>-previa/NN.jpg`: ábrelos cuando dudes de un detalle. La previa también imprime una **medición** por frase; si alguna sale `CASI VACÍO` o `MUY CLARO`, ese plano está mal aunque a simple vista parezca correcto. La **maquetación** lista las anotaciones que pisan algo y no se han podido apartar solas: arréglalas. Y el **coste de render**: segundos por fotograma de cada frase y minutos estimados (a 60 fps). Si alguna frase sale `PESADA` o el total pasa de 48 min, aligérala en esta misma ronda (ver «Rendimiento» abajo): si no, el render baja solo la resolución del 3D y el vídeo se ve peor.
    3. Puntúa cada fotograma del 1 al 10 en cuatro cosas:
-      - **acabado**: texturas y detalle, nada que parezca de juguete;
+      - **acabado**: texturas, detalle y formas definidas (biseles que brillan, siluetas que se recortan contra el fondo), nada que parezca de juguete;
       - **composición**: el objeto llena el cuadro y no hay solapes ni nada cortado sin querer;
       - **claridad**: se entiende la idea de esa frase sin audio;
       - **legibilidad**: subtítulos y anotaciones se leen bien.
    4. Escribe los 3 peores problemas, arréglalos y repite.
    5. Para cuando todo esté en 8 o más, o tras 3 rondas. Si después tocas algo, saca otra previa antes del render: nada entra en el vídeo sin haberlo visto.
-5. Render y envío (lo que dijo la previa, normalmente 20-30 min): lánzalo **en segundo plano** con el aviso de fallo encadenado y espera a que acabe:
+5. Render y envío (lo que dijo la previa, normalmente 25-40 min): lánzalo **en segundo plano** con el aviso de fallo encadenado y espera a que acabe:
    `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4 || python3 pipeline/enviar.py --aviso "Falló el render o el envío de <id>"`
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
 
@@ -30,11 +30,12 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 
 `{ "id", "frases": [...], "caption", "hashtags" }`. Temas curiosos explicados como en las referencias:
 
-- **Gancho** (frase 1): una pregunta que parece tonta o una creencia común. Frase 2: giro inmediato ("No, no está roto.", "Spoiler: no entra.").
+- **Gancho** (frases 1-2): usa el tipo de gancho que imprime `siguiente.py` (cambia cada vídeo). La frase 2 da el giro en palabras propias de este tema.
+- **Prohibido** abrir o girar con muletillas de plantilla: «Spoiler», «Respuesta corta», «Alerta», «Dato curioso», «¿Sabías que…?», «Te lo explico», «Atento», «Agárrate». Tampoco copies frases del guion de ejemplo: es para ver el formato, no el texto.
 - **Explicación paso a paso**: una idea por frase, como máximo 14 palabras. Cada frase es un cambio en pantalla.
 - **Un segundo giro a mitad** (un dato que nadie espera, o "y aquí viene lo bueno") para que no se vayan antes del final.
 - **Remate**: la conclusión en una frase redonda ("Así que sí, está suelto, pero a propósito.").
-- **Cierre para compartir**: "Envíaselo a ese amigo que…" con algo concreto y gracioso. Varía la fórmula.
+- **Cierre para compartir**: la fórmula que imprime `siguiente.py`, con algo concreto y gracioso de este tema (va con `ui.compartir`).
 - **Duración**: 55-65 s, que con esta voz son 130-150 palabras en 14-17 frases. Español de España, tono de colega.
 - Marca con `*asteriscos*` las palabras clave: salen en blanco y en negrita; el resto, en gris.
 - Escribe los números con cifras ("120", "4.000 rpm").
@@ -54,7 +55,8 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 | `color(material.color, 0xff4d5e, {t, dur})` | cambia de color |
 | `cada(t => …)` | lógica continua (giros, parpadeos) |
 | `acumulado(t => velocidad)` | ángulo integrado cuando la velocidad cambia |
-| `camara.poner({pos, mira, fov})` / `camara.ir({pos, mira, fov}, {t, dur})` | cámara. Con fov 38, el ancho visible es ≈ 0,39 × distancia |
+| `camara.poner({pos, mira, fov})` / `camara.ir({pos, mira, fov}, {t, dur})` | cámara. Con fov 38, el ancho visible es ≈ 0,39 × distancia. Sale a 60 fps: se ve cada salto, así que todo cambio de plano es un `camara.ir`, nunca un `poner` a mitad de vídeo |
+| `camara.deriva(v, {t, dur})` | vaivén lento de la cámara para que el plano nunca esté muerto (1 por defecto, 0 = trípode, 2 = cámara en mano suave). Ponlo a 0 en los macros donde la precisión importa |
 | `fondo.ponerBrillo(hex, a)` / `fondo.brillo(hex, {t, dur, a})` | color del resplandor del fondo |
 
 **3D** (esto es lo que marca la diferencia: tiene que parecer un render de producto, no un dibujo):
@@ -63,10 +65,12 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 - Geometrías: `geo.caja(w, h, d, radio)` (redondeada), `geo.extruir(shape, grosor, bisel)`, `geo.torno([[radio, altura], …])` (pomos, botellas, latas, bombillas), `geo.engranaje(dientes, radio, grosor, {aligerado, sinDiente})`, `geo.diente(...)`, `geo.ejeEstriado(radio, largo)`, y cualquier primitiva de THREE.
 - Rendimiento (el render es por CPU, sin tarjeta gráfica): lo que más cuesta es lo que llena la pantalla y las pasadas de sombra. Una `PointLight` o `SpotLight` con `castShadow` vuelve a pintar la escena (6 veces la PointLight): para dar ambiente usa luces sin sombra, `mat.emisivo` o `halo`. Piezas repetidas (traviesas, tornillos, dientes sueltos): `THREE.InstancedMesh`, no cientos de mallas. Cilindros y toros con 32-64 segmentos bastan a este tamaño. Lo que ya no sale en cuadro, `visible = false`.
 - Ayudantes: `bordes(malla, {color})` (aristas iluminadas, para cristales y piezas fantasma), `halo(obj, {color, tam})` (resplandor; anima `halo.material.opacity`), `suelo({y})` (recibe sombras), `sombras({centro, tam})` (zona que cubre la luz que da sombra; si la escena salta de sitio, llámalo dentro de `cada`).
-- Profundidad de campo: enfoca solo el punto al que mira la cámara. `dof.apertura` (1 suave, 2,5 macro) y `dof.foco` (0 = automático). Anímalo con `tween(dof, …)`.
+- Profundidad de campo: enfoca solo el punto al que mira la cámara. `dof.apertura` (1 suave, 2,5 macro) y `dof.foco` (0 = automático). `dof.resplandor` (0,5 por defecto) hace brillar emisivos y reflejos fuertes: súbelo para un fogonazo o un LED, bájalo si el plano se ve lechoso. Anímalo todo con `tween(dof, …)`.
+- Luz: el motor ya trae un estudio fotográfico (luz principal con sombra, contraluz y cajas de luz alargadas que se reflejan en el metal y dibujan los cantos). No añadas luces para «iluminar más»: si algo sale oscuro, gíralo hacia la luz o cambia el ángulo de cámara.
 - Calidad mínima:
   - **Nunca modeles personas ni animales enteros** con cápsulas y esferas: quedan como muñecos de plastilina y hunden el vídeo. Si el tema va de una persona o un animal, cuéntalo con **objetos** reconocibles (un casco, un reloj, un termómetro, una herramienta, la pieza concreta), con un esquema de cristal con aristas iluminadas (`mat.vidrio` + `bordes`) o con cifras y anotaciones; como mucho una parte (una mano, un ojo), nunca un cuerpo entero.
   - Modela el objeto real con sus detalles (biseles, tornillos, estrías, rótulos, texturas), no un bloque genérico.
+  - **Formas definidas**: nada de `BoxGeometry` ni cilindros a pelo en piezas que se ven de cerca: usa `geo.caja` (canto redondeado), `geo.extruir` con bisel o `geo.torno`, porque los biseles son lo que pilla las cajas de luz y hace que la pieza se lea. Nada de superficies grandes lisas de un solo color: dales textura (`mat.metal`, `mat.plastico`, `mat.pintado`). Una pieza rota o suelta se modela con su forma real (un diente con su perfil, una esquirla con `geo.extruir`), no con un cubo rojo.
   - El render siempre sale en vertical 1080×1920: no toques `pipeline/`.
   - Planos macro: el objeto llena el ancho y puede salirse un poco del cuadro.
   - Fondo oscuro: nada de planos grandes y claros detrás, porque lavan la imagen y se dejan de leer los subtítulos.
@@ -77,7 +81,7 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 | función | qué es |
 |---|---|
 | `ui.numero({texto, unidad, tam})` | cifra gigante en monoespaciada con dígitos de colores; `texto` puede ser `t => …` para un contador |
-| `ui.etiqueta(texto, {color})` | valor corto ("0 rpm", "hueco 0,01") |
+| `ui.etiqueta(texto, {color})` | valor corto ("0 rpm", "hueco 0,01"). Si queda lejos de su `ancla`, sale sola una línea guía con un punto sobre la pieza (`linea: false` la quita) |
 | `ui.caja({w, h, rotulo, color})` / `ui.circulo({r, color})` | resaltar una pieza |
 | `ui.giro({r, sentido: 'horario'/'antihorario', color})` | flecha circular de giro |
 | `ui.flecha({desde, hacia, curva, color})` | flecha; extremos `[x, y]` o `{ancla, offset}` |
@@ -89,10 +93,11 @@ No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guar
 | `sonido(tipo, t, {vol, dur})` | efecto de sonido extra: `whoosh`, `pop`, `clic`, `golpe`, `chispas`. Ya suenan solos los movimientos de cámara (whoosh), las anotaciones (pop), los sellos y temblores (golpe), las chispas y el móvil de compartir; añade solo lo que falte (una pieza que encaja: `clic`) |
 
 **Zonas de pantalla**:
-- y 260-430: subtítulos. No pongas nada ahí.
+- y 250-450: subtítulos (con una franja oscura detrás para que se lean). El motor oscurece esa franja del 3D, así que no encuadres ahí lo importante.
 - y 450-1250: zona principal.
 - y 1250-1420: tarjetas y sellos.
-- Por debajo de y 1450 lo tapa la interfaz de TikTok: solo `ui.nota`.
+- Por debajo de y 1450, y a la derecha por debajo de y 1060, lo tapa la interfaz de TikTok: solo `ui.nota`.
+- Las anotaciones de texto (`etiqueta`, `tarjeta`, `numero`, `texto`) se apartan solas lo justo para no pisar los subtítulos, otra anotación, los bordes ni los botones de TikTok. Cajas, círculos y sellos se quedan donde los pones (`quieto: true` fija también una de texto). Aun así, colócalas bien de entrada: si se apartan mucho, se alejan de lo que señalan.
 
 Colores: cian `#2ee6f0`, azul `#4f7dff`, morado `#a46bff`, amarillo `#ffd23f`, naranja `#ff9b3d`, rojo `#ff4d5e`, verde `#3ddc84`.
 
