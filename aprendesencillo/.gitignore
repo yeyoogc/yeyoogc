@@ -7,3 +7,5 @@ guiones/*
 escenas/*
 !escenas/marcha-atras-120.js
 !escenas/agujero-negro.js
+node_modules/
+package-lock.json

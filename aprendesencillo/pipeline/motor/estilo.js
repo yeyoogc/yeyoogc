@@ -73,7 +73,9 @@ export function crearEstilo({ escena, camara, sol, cada, fondo, motas, ponerDirS
       // Esfera que sigue a la cámara y se pinta en el plano lejano: solo se ve donde no hay nada delante.
       cielo = new THREE.Mesh(new THREE.SphereGeometry(50, 48, 24), new THREE.ShaderMaterial({ uniforms: u, vertexShader: CIELO_VERT, fragmentShader: CIELO_FRAG, side: THREE.BackSide, depthWrite: false, fog: false }));
       cielo.frustumCulled = false; cielo.renderOrder = 999; cielo.userData.sinSombra = cielo.userData.ayudante = true; escena.add(cielo);
-      cada(T => { cielo.position.copy(camara.position); cielo.material.uniforms.T.value = T; });
+      // Se centra en la cámara justo antes de pintarse (en cada no: ahí la cámara aún no se ha movido a este fotograma).
+      cielo.onBeforeRender = (r, sc, cam) => { cielo.position.copy(cam.position); cielo.updateMatrixWorld(); };
+      cada(T => { cielo.material.uniforms.T.value = T; });
     } else for (const k in u) cielo.material.uniforms[k].value = u[k].value;
     escena.fog = m.niebla ? new THREE.Fog(m.niebla[0], m.niebla[1], m.niebla[2]) : null;
     if (!hemi) { hemi = new THREE.HemisphereLight(); escena.add(hemi); }

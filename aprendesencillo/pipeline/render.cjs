@@ -16,6 +16,10 @@ const [, , rutaTimeline, arg2, arg3] = process.argv;
 // Presupuesto de render. Con WebGL por software el coste depende de la escena: si va a tardar más de LIMITE_MIN,
 // el 3D se pinta a menos resolución (los textos siguen nítidos) para quedarse cerca de OBJETIVO_MIN.
 const LIMITE_MIN = 48, OBJETIVO_MIN = 42, ESCALA = 0.75, ESCALA_MIN = 0.5;
+// Con tarjeta gráfica de verdad (un Mac, o APRENDE_GPU=1) no hay que ahorrar: 3D a resolución completa y MSAA 4×.
+const GPU = process.platform === 'darwin' || process.env.APRENDE_GPU === '1';
+const ARGS = GPU ? ['--use-angle=' + (process.platform === 'darwin' ? 'metal' : 'default'), '--enable-gpu', '--ignore-gpu-blocklist']
+                 : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const SALTO = 35;   // diferencia media a partir de la cual hay salto: movimiento continuo 2-17, barrido rápido 26-30, corte 48-89
 const FIJO = 0.15;   // s por fotograma que no dependen de la resolución del 3D (captura y textos); medido en marcha-atras-120
 
@@ -89,9 +93,12 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
 
 (async () => {
   const timeline = JSON.parse(fs.readFileSync(rutaTimeline, 'utf8'));
+  if (GPU) { timeline.escala ??= 1; timeline.muestras ??= 4; console.log('  render con GPU: 3D al 100 % y MSAA 4×'); }
   const srv = await servidor(), puerto = srv.address().port;
-  const navegador = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const navegador = await chromium.launch({ args: ARGS });
   let pagina = await abrir(navegador, puerto, timeline);
+  const gpu = await pagina.evaluate(() => { const gl = document.createElement('canvas').getContext('webgl2'), x = gl?.getExtension('WEBGL_debug_renderer_info'); return x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : 'desconocida'; });
+  console.log(`  WebGL: ${gpu}`);
 
   if (arg2 === '--previa') {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'previa-'));
