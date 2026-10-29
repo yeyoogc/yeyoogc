@@ -118,6 +118,12 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '1', '-i', path.join(dir, '%02d.jpg'),
       '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
+    // Cada anotación, revisada en el momento en que aparece (las que salen después de la mitad de la frase no estaban en la foto).
+    const fraseDe = t => Math.max(0, timeline.frases.findIndex(f => t >= f.inicio && t < f.fin));
+    for (const t of await pagina.evaluate(() => window.momentosAnotaciones())) {
+      for (const a of await pagina.evaluate(t => window.maquetacionEn(t), t)) maqueta.push(`    frase ${String(fraseDe(t)).padStart(2)}: ${a}`);
+    }
+    maqueta.splice(0, maqueta.length, ...new Set(maqueta));
     // Saltos: diferencia media (0-255) en la zona principal entre el fotograma anterior y el siguiente a cada cambio de frase.
     // A 60 fps, un movimiento continuo cambia poco de un fotograma al otro; un corte o una pieza que aparece de golpe, mucho.
     const saltos = [];

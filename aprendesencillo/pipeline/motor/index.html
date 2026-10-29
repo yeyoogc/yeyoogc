@@ -38,11 +38,11 @@
   .ov { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
   .numero { font-family: 'JetBrains Mono', monospace; font-weight: 800; letter-spacing: -4px; white-space: nowrap; line-height: 1; text-shadow: 0 0 40px rgba(255,255,255,.12); }
   .numero .uni { font-size: .38em; letter-spacing: 0; margin-left: .25em; color: var(--gris); font-weight: 700; }
-  .tarjeta { min-width: 520px; padding: 22px 30px 24px 34px; border-radius: 22px; background: rgba(16,18,25,.88); border: 2px solid rgba(255,255,255,.12);
+  .tarjeta { min-width: 520px; max-width: 860px; padding: 22px 30px 24px 34px; border-radius: 22px; background: rgba(16,18,25,.88); border: 2px solid rgba(255,255,255,.12);
              box-shadow: 0 20px 60px rgba(0,0,0,.55); }
   .tarjeta::before { content: ''; position: absolute; left: 14px; top: 20px; bottom: 20px; width: 6px; border-radius: 3px; background: var(--acento, var(--naranja)); }
   .tarjeta .tit { font-size: 30px; font-weight: 700; letter-spacing: 5px; color: var(--gris); text-transform: uppercase; }
-  .tarjeta .val { font-family: 'JetBrains Mono', monospace; font-size: 58px; font-weight: 700; margin-top: 8px; white-space: nowrap; }
+  .tarjeta .val { font-family: 'JetBrains Mono', monospace; font-size: 58px; font-weight: 700; margin-top: 8px; line-height: 1.12; text-wrap: balance; }
   .etiqueta { font-family: 'JetBrains Mono', monospace; font-size: 42px; font-weight: 700; white-space: nowrap; color: var(--c, var(--amarillo));
               padding: 8px 16px; border-radius: 10px; background: rgba(7,8,12,.72); border: 2px solid currentColor; }
   .caja { border: 3px solid var(--c, var(--amarillo)); border-radius: 12px; box-shadow: 0 0 24px color-mix(in srgb, var(--c, var(--amarillo)) 40%, transparent); }

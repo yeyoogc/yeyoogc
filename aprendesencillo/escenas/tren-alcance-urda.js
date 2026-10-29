@@ -128,7 +128,7 @@ export default function crear(ctx) {
   tween(cableMat.uniforms.vivo, { value: 0 }, { t: palabra(7, 'cayó') - 0.05, dur: 0.25, ease: 'entra' });
   ui.cifra({ texto: '8:30', unidad: 'LZB caído', tam: 110, t: palabra(7, '8:30'), hasta: fin(7), y: 1300 });
   // 8. Señal y centro de control
-  ui.tarjeta({ titulo: 'Sin LZB', valor: 'solo sigue si autoriza el centro', acento: '#ffd23f', t: palabra(8, 'centro') - 0.4, hasta: fin(8), y: 1330 });
+  ui.tarjeta({ titulo: 'Sin LZB', valor: 'decide el centro de control', acento: '#ffd23f', t: palabra(8, 'centro') - 0.4, hasta: fin(8), y: 1330 });
   // 9. La orden al AVE
   ui.tarjeta({ titulo: 'Orden al AVE', valor: 'marcha normal', acento: '#ff4d5e', t: palabra(9, 'normalidad') - 0.3, hasta: fin(9), y: 1330 });
   ui.etiqueta('Iryo · parado', { ancla: iryo.techo, offset: [0, 0.4, 0], color: '#ff4d5e', t: palabra(9, 'Iryo'), hasta: fin(9) });

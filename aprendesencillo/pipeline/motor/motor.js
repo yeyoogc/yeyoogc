@@ -121,10 +121,12 @@ const MOVIBLES = new Set(['etiqueta', 'tarjeta', 'numero', 'cifra', 'texto']);
 const ZONA = { x0: 36, x1: 1044, y0: 210, y1: 1440 };   // por debajo de 1440 lo tapa TikTok (solo ui.nota)
 const BARRA_TIKTOK = { x: 935, y: 1060, w: 145, h: 620, nombre: 'los botones de TikTok' };
 let avisosMaqueta = [];
-function rectDe(o, px, py) {
+// encaje < 1: la anotación no cabe de ancho y se encoge (se escala desde su centro).
+function rectDe(o, px, py, encaje = 1) {
   const w = o.el.offsetWidth, h = o.el.offsetHeight;
   const [ox, oy] = o.origen.split(',').map((v, i) => (v.trim().endsWith('%') ? (parseFloat(v) / 100) * (i ? h : w) : parseFloat(v)));
-  return { x: px + ox, y: py + oy, w, h };
+  const cx = px + ox + w / 2, cy = py + oy + h / 2;
+  return { x: cx - (w * encaje) / 2, y: cy - (h * encaje) / 2, w: w * encaje, h: h * encaje };
 }
 const solapan = (a, b, m = 0) => a.x < b.x + b.w + m && b.x < a.x + a.w + m && a.y < b.y + b.h + m && b.y < a.y + a.h + m;
 // Empuja r fuera de b por el lado más corto (en vertical salvo que en horizontal sea mucho menos). abajo: solo hacia abajo.
@@ -135,7 +137,7 @@ function apartar(r, b, abajo = false, m = 16) {
   if (abajo || Math.abs(dy) <= Math.abs(dx) * 1.5) r.y += dy; else r.x += dx;
   return true;
 }
-const nombreDe = o => `«${o.el.textContent.trim().replace(/\s+/g, ' ').slice(0, 28)}»`;
+const nombreDe = o => `«${o.el.innerText.trim().replace(/\s+/g, ' ').slice(0, 28)}»`;
 
 function pintarOverlays(T) {
   const vivos = [];
@@ -155,7 +157,8 @@ function pintarOverlays(T) {
   avisosMaqueta = [];
   const orden = [...vivos.filter(v => v.o.quieto), ...vivos.filter(v => !v.o.quieto)];
   for (const v of orden) {
-    const r = rectDe(v.o, ...v.p), r0 = { ...r };
+    v.encaje = v.o.quieto ? 1 : Math.min(1, (ZONA.x1 - ZONA.x0) / Math.max(1, v.o.el.offsetWidth));   // lo que no cabe de ancho, se encoge
+    const r = rectDe(v.o, ...v.p, v.encaje), r0 = { ...r };
     if (!v.o.quieto) {
       for (let i = 0; i < 8; i++) {
         let movido = false;
@@ -165,13 +168,14 @@ function pintarOverlays(T) {
       }
     }
     for (const b of obst) if (solapan(r, b)) avisosMaqueta.push(`${nombreDe(v.o)} pisa ${b.nombre}`);
+    if (v.encaje < 0.9) avisosMaqueta.push(`${nombreDe(v.o)} no cabía de ancho y se ha encogido al ${Math.round(v.encaje * 100)} %: acórtalo`);
     if (r.x < 0 || r.x + r.w > W || r.y + r.h > H) avisosMaqueta.push(`${nombreDe(v.o)} se sale del cuadro`);
     obst.push({ ...r, nombre: nombreDe(v.o) });
     v.r = r; v.dx = r.x - r0.x; v.dy = r.y - r0.y;
   }
-  for (const { o, pa, p: [px, py], dx, dy } of vivos) {
+  for (const { o, pa, p: [px, py], dx, dy, encaje } of vivos) {
     const s = o.entrada === 'escala' ? 0.85 + 0.15 * EASE.rebote(pa) : o.entrada === 'golpe' ? 1.6 - 0.6 * EASE.sale(clamp((T - o.t) / 0.18)) : 1;
-    o.el.style.transform = `translate(${px + dx}px, ${py + dy}px) translate(${o.origen}) scale(${s})`;
+    o.el.style.transform = `translate(${px + dx}px, ${py + dy}px) translate(${o.origen}) scale(${s * encaje})`;
     o.actualizar?.(T, pa, px + dx, py + dy);
   }
   pintarGuias(vivos);
@@ -474,7 +478,7 @@ window.iniciar = async datos => {
   await document.fonts.ready;
 };
 
-window.pintar = T => {
+function actualizar(T) {
   aplicarTweens(T);
   for (const fn of cada) fn(T);
   const dist = camPos.distanceTo(camMira), amp = deriva.v * dist * 0.0045;
@@ -483,6 +487,10 @@ window.pintar = T => {
   camara.position.set(camPos.x + dx, camPos.y + dy, camPos.z);
   camara.fov = camFov.v; camara.updateProjectionMatrix(); camara.lookAt(camMira);
   escena.updateMatrixWorld(); camara.updateMatrixWorld();
+  return dist;
+}
+window.pintar = T => {
+  const dist = actualizar(T);
   pintarFondo(T);
   motas.material.uniforms.T.value = T;
   post.render({ foco: dof.foco > 0 ? dof.foco : dist, apertura: dof.apertura, fondo: dof.fondo, exposicion: dof.exposicion, resplandor: dof.resplandor, tono: dof.tono });
@@ -502,6 +510,9 @@ window.estadisticas = () => {
 };
 // Para la previa: problemas de maquetación del último fotograma pintado.
 window.maquetacion = () => [...new Set(avisosMaqueta)];
+// Para la previa: cada anotación revisada en su propio momento (sin pintar el 3D, que es lo caro).
+window.momentosAnotaciones = () => overlays.filter(o => !o.fijo).map(o => Math.min(o.t + 0.35, o.hasta));
+window.maquetacionEn = T => { actualizar(T); pintarSubs(T); pintarOverlays(T); return [...new Set(avisosMaqueta)]; };
 // Lista de efectos de sonido sin duplicados (dos del mismo tipo a menos de 0,15 s cuentan como uno).
 window.sonidos = () => {
   const lista = [...sonidos].sort((a, b) => a.t - b.t), fuera = [];
