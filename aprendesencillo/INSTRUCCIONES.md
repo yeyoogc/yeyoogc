@@ -25,9 +25,14 @@ Cada vídeo es una explicación animada **hecha a medida**, en **estilo 3D ilust
    5. Para cuando todo esté en 8 o más, o tras 3 rondas. Si después tocas algo, saca otra previa antes del render: nada entra en el vídeo sin haberlo visto.
 5. Render y envío (lo que dijo la previa, normalmente 25-40 min): lánzalo **en segundo plano** con el aviso de fallo encadenado y espera a que acabe:
    `python3 pipeline/make.py guiones/<id>.json && python3 pipeline/enviar.py out/<id>.mp4 || python3 pipeline/enviar.py --aviso "Falló el render o el envío de <id>"`
+   **Modo Mac** (si el mensaje que te lanza lo dice): no renderices aquí. Yeyo lo renderiza en su Mac con la GPU (3 min y más calidad):
+   1. `python3 pipeline/make.py guiones/<id>.json --paquete` → `entregas/<id>/` (voz, línea de tiempo y texto de TikTok).
+   2. Sube solo ese vídeo: `git add -f escenas/<id>.js guiones/<id>.json entregas/<id> entregas/ultimo.txt && git commit -m "Paquete <id>" && git push -u origin aprendesencillo`.
+   3. Avisa: `python3 pipeline/enviar.py --mensaje "🎬 <pregunta del tema> listo para renderizar. En el Mac: sh ~/yeyoogc/aprendesencillo/pipeline/render-mac.sh"`.
+   4. Termina con un resumen corto, ese mismo comando y el texto de TikTok.
 6. Si algo falla y no lo arreglas en un intento: `python3 pipeline/enviar.py --aviso "<qué ha fallado>"`. Si el paso 1 imprimió `AVISO`, mándalo igual.
 
-No hagas commits, push ni PRs: el tema sale de la fecha y no hay estado que guardar.
+No hagas commits, push ni PRs (el tema sale de la fecha y no hay estado que guardar), salvo el paquete del modo Mac.
 
 ## Guion (`guiones/<id>.json`)
 

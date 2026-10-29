@@ -2,7 +2,8 @@
 """Manda los vídeos (con su texto para TikTok) o un aviso a tu Telegram.
 
 Uso: python3 pipeline/enviar.py out/a.mp4 [out/b.mp4 ...]
-     python3 pipeline/enviar.py --aviso "texto"
+     python3 pipeline/enviar.py --aviso "texto"      (aviso de fallo, con ⚠️)
+     python3 pipeline/enviar.py --mensaje "texto"    (mensaje normal)
 Necesita TELEGRAM_BOT_TOKEN. TELEGRAM_CHAT_ID es opcional: si no está, se usa el último chat
 privado que haya escrito al bot (Telegram solo guarda esos mensajes 24 h).
 """
@@ -38,6 +39,8 @@ def curl(metodo, *campos):
 
 if len(sys.argv) == 3 and sys.argv[1] == "--aviso":
     curl("sendMessage", "--form-string", f"text=⚠️ @aprendesencillo: {sys.argv[2]}")
+elif len(sys.argv) == 3 and sys.argv[1] == "--mensaje":
+    curl("sendMessage", "--form-string", f"text={sys.argv[2]}")
 elif len(sys.argv) < 2:
     sys.exit(__doc__)
 else:

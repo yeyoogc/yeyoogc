@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Convierte guiones/<id>.json + escenas/<id>.js en un vídeo vertical para TikTok.
 
-Uso: python3 pipeline/make.py guiones/<id>.json           ->  out/<id>.mp4 + out/<id>.txt
-     python3 pipeline/make.py guiones/<id>.json --previa  ->  out/<id>-previa.jpg (un fotograma por frase, para revisar)
+Uso: python3 pipeline/make.py guiones/<id>.json            ->  out/<id>.mp4 + out/<id>.txt
+     python3 pipeline/make.py guiones/<id>.json --previa   ->  out/<id>-previa.jpg (un fotograma por frase, para revisar)
+     python3 pipeline/make.py guiones/<id>.json --paquete  ->  entregas/<id>/ (voz, línea de tiempo y texto) para
+                                                              renderizarlo en el Mac con pipeline/render-mac.sh
 
 Voz: ElevenLabs si existe ELEVENLABS_API_KEY; si no, edge-tts (gratis). La voz se guarda en caché
 (out/cache), así que repetir la previa o el render no vuelve a gastar caracteres.
@@ -169,7 +171,7 @@ def medir_previa(carpeta, timeline):
         print(f"    frase {i:2d}: cobertura {cobertura:4.0%}, brillo {media:3.0f}  {' · '.join(avisos)}  «{timeline['frases'][i]['texto'][:40]}»")
 
 
-def main(ruta_guion, previa):
+def main(ruta_guion, previa, paquete=False):
     guion = json.loads(Path(ruta_guion).read_text(encoding="utf-8"))
     vid = guion["id"]
     if not (RAIZ / "escenas" / f"{vid}.js").exists():
@@ -187,6 +189,16 @@ def main(ruta_guion, previa):
     ruta_tl = tmp / "timeline.json"
     ruta_tl.write_text(json.dumps(timeline, ensure_ascii=False), encoding="utf-8")
 
+    texto_tiktok = guion["caption"].strip() + "\n\n" + " ".join(guion.get("hashtags", [])) + "\n"
+    if paquete:
+        dest = RAIZ / "entregas" / vid
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / "timeline.json").write_text(json.dumps(timeline, ensure_ascii=False), encoding="utf-8")
+        ff("-i", str(audio), "-c:a", "aac", "-b:a", "160k", str(dest / "voz.m4a"))
+        (dest / "texto.txt").write_text(texto_tiktok, encoding="utf-8")
+        (RAIZ / "entregas" / "ultimo.txt").write_text(vid + "\n", encoding="utf-8")
+        print(f"OK paquete en entregas/{vid}/ ({timeline['duracion']:.1f} s). En el Mac: sh aprendesencillo/pipeline/render-mac.sh")
+        return
     render = ["node", str(RAIZ / "pipeline" / "render.cjs"), str(ruta_tl)]
     if previa:
         subprocess.run(render + ["--previa", str(salida / f"{vid}-previa.jpg")], check=True)
@@ -194,7 +206,7 @@ def main(ruta_guion, previa):
         return
     mp4 = salida / f"{vid}.mp4"
     subprocess.run(render + [str(audio), str(mp4)], check=True)
-    (salida / f"{vid}.txt").write_text(guion["caption"].strip() + "\n\n" + " ".join(guion.get("hashtags", [])) + "\n", encoding="utf-8")
+    (salida / f"{vid}.txt").write_text(texto_tiktok, encoding="utf-8")
     print(f"OK {mp4} ({timeline['duracion']:.1f} s)")
 
 
@@ -202,4 +214,4 @@ if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 1:
         sys.exit(__doc__)
-    main(args[0], "--previa" in sys.argv)
+    main(args[0], "--previa" in sys.argv, "--paquete" in sys.argv)
