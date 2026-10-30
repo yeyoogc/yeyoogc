@@ -116,7 +116,7 @@ const estimar = (timeline, costes) => timeline.frases.reduce((s, f, i) => s + co
     for (const f of fs.readdirSync(dir)) fs.copyFileSync(path.join(dir, f), path.join(sueltos, f));
     const cols = Math.min(5, tiempos.length), filas = Math.ceil(tiempos.length / cols);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', '1', '-i', path.join(dir, '%02d.jpg'),
-      '-vf', `scale=324:576,tile=${cols}x${filas}:padding=6:color=0x333333`, '-frames:v', '1', arg3]);
+      '-vf', `scale=216:384,tile=${cols}x${filas}:padding=4:color=0x333333`, '-frames:v', '1', arg3]);
     console.log(`Previa: ${arg3} (${tiempos.length} frases)`);
     // Cada anotación, revisada en el momento en que aparece (las que salen después de la mitad de la frase no estaban en la foto).
     const fraseDe = t => Math.max(0, timeline.frases.findIndex(f => t >= f.inicio && t < f.fin));
