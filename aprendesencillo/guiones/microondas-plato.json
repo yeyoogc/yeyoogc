@@ -1,0 +1,47 @@
+{
+  "id": "microondas-plato",
+  "look": "mundo('azul') (tecnología, azul marino). Microondas protagonista en blanco roto #e9e6df (plástico, rug. 0,45) con puerta de cristal oscuro (rejilla de puntos, opacidad 0,5) con bisagra a la izquierda, panel con display verde #3ddc84 «0:30»; interior de chapa esmaltada gris #7c8590 (las ondas brillan sobre ella). Tapa (techo con agitador) que se levanta en corte. Plato de cristal sobre aro con una tortilla de patatas dorada (shader: tostados que giran con ella; calor del mapa en coordenadas de la cavidad: caliente #ff2a08 con brillo, frío azul hielo). Ondas: cintas aditivas cian #2ee6f0 y amarillo #ffd23f; estacionaria blanca. Mapa de calor: manchas rojas que brillan y velo azul en lo frío, cada 0,61 (6,1 cm). Chocolate #3e2214 con onzas en relieve, a lo largo; manchas derretidas planas y brillantes #5e2f16 con halo naranja #ff7a2e. Acento: amarillo #ffd23f.",
+  "frases": [
+    "Dentro de tu microondas, las ondas suben y bajan *2.450 millones de veces* por segundo.",
+    "¿Y entonces para qué tiene que *girar el plato*?",
+    "Porque esas ondas rebotan en las paredes de *metal* y se cruzan.",
+    "Donde se suman, calientan *muchísimo*. Donde se anulan, casi *nada*.",
+    "Quedan zonas *calientes* y zonas *frías* separadas unos *6 centímetros*.",
+    "Si la comida se quedara quieta, tendría puntos *ardiendo* y puntos *helados*.",
+    "Al girar, cada trozo pasa por las zonas calientes y se calienta *parejo*.",
+    "Y ahora viene lo bueno: quita el plato y mete una *tableta de chocolate*.",
+    "Se derrite a *manchas*, cada unos 6 centímetros.",
+    "Mide esa distancia y multiplícala por *dos* y por la frecuencia del microondas.",
+    "Te sale casi *300.000 kilómetros por segundo*: la velocidad de la *luz*.",
+    "Medida en tu cocina, con *chocolate*.",
+    "Los microondas sin plato lo hacen con una pieza de *metal* escondida que gira y remueve las ondas.",
+    "Así que el plato no es un adorno: es lo que evita que comas *a medias*.",
+    "Compártelo con alguien, a ver si adivina a cuántos centímetros salen las *manchas*."
+  ],
+  "planos": [
+    "CÁMARA de [1,4 2,2 9] hacia el cristal (25 % más cerca en la frase), mirando a [-0,4 1,5 0], fov 40 · HÉROE: el microondas encendido: por el cristal se ven las ondas y el plato · SECUNDARIO: display 0:30 · ANOTACIÓN: cifra «2.450 millones / por segundo» en «2.450» · PASO: entra hacia la puerta",
+    "CÁMARA a [-0,8 2,5 5,6] mirando al plato, fov 38, fundido 1,1 s · HÉROE: la puerta se abre 106° (pesado 1 s) y el plato con la tortilla arranca a girar · SECUNDARIO: ondas viajeras · ANOTACIÓN: ninguna · PASO: acercamiento lento",
+    "CÁMARA a [1,4 3,4 5,4] mirando a [-0,7 1,65 0], fov 40 · HÉROE: la tapa se levanta en corte (inOut 1,1 s) y las ondas cruzan la cavidad · SECUNDARIO: tortilla girando · ANOTACIÓN: «paredes de metal» en «metal» · PASO: sigue",
+    "CÁMARA a [0 2,2 4,8], fov 42 · HÉROE: las ondas de color se apagan al 22 % y aparece la estacionaria blanca · SECUNDARIO: tortilla · ANOTACIÓN: «se suman» (vientre) y «se anulan» (nodo) con línea guía · PASO: sigue",
+    "CÁMARA cenital a [-0,5 8,4 3] mirando al mapa, fov 36 · HÉROE: mapa de calor (sale 0,6 s): rejilla de manchas rojas que brillan · SECUNDARIO: plato debajo · ANOTACIÓN: flecha blanca de mancha a mancha y «6 cm» · PASO: acercamiento",
+    "CÁMARA a [-0,2 5,8 3,2], fov 34 · HÉROE: el plato se para y la tortilla se queda a manchas: rojo ardiendo y azul helado (sale 0,8 s) · SECUNDARIO: nada · ANOTACIÓN: «ardiendo» y «helado» · PASO: sigue",
+    "CÁMARA a [0,9 4,4 4], fov 40 · HÉROE: el plato vuelve a girar y las manchas se funden en dorado parejo (inOut toda la frase) · SECUNDARIO: nada · ANOTACIÓN: «parejo» · PASO: sigue",
+    "CÁMARA a [0,3 4,2 5,6], fov 40 · HÉROE: el plato sube y sale de cuadro (inOut 1 s) en «quita»; 0,35 s después la tableta entra por la puerta (pesado 0,9 s) · SECUNDARIO: nada · ANOTACIÓN: ninguna · PASO: sube a cenital",
+    "CÁMARA cenital a [-0,4 7,6 3,4], fov 36 · HÉROE: cinco manchas derretidas en fila, escalonadas 0,14 s (rapido) con halo naranja · SECUNDARIO: nada · ANOTACIÓN: ninguna · PASO: acercamiento",
+    "CÁMARA a [0 6,6 3], fov 36 · HÉROE: flecha amarilla de una mancha a la siguiente · SECUNDARIO: tarjeta «La cuenta: 6,1 cm × 2 × 2.450 MHz» · ANOTACIÓN: «6,1 cm» · PASO: se abre",
+    "CÁMARA a [0,7 5 4,8], fov 40 · HÉROE: contador 0 → 299.000 km/s en 1,1 s · SECUNDARIO: las manchas se encienden en fila en «luz» · ANOTACIÓN: «velocidad de la luz» · PASO: se abre a la cocina",
+    "CÁMARA a [-0,1 4 9,5] mirando a [-0,5 0,6 0], fov 40 · HÉROE: el microondas en la cocina con el chocolate dentro; la tapa baja a su sitio (inOut 1,2 s) · SECUNDARIO: display · ANOTACIÓN: la cifra sigue · PASO: entra por la puerta",
+    "CÁMARA baja a [0,1 1 4,6] mirando al techo, fov 42 · HÉROE: el agitador girando bajo el techo · SECUNDARIO: ondas que se remueven, luz interior más fuerte · ANOTACIÓN: «pieza de metal que gira» · PASO: baja al plato",
+    "CÁMARA a [0,5 3,4 4,6], fov 38 · HÉROE: el plato vuelve desde delante (pesado 0,9 s) y gira con la tortilla pareja · SECUNDARIO: vapor que sube · ANOTACIÓN: ninguna · PASO: se abre",
+    "CÁMARA a [3 2,8 9], fov 40, desenfoque a 1,2 · HÉROE: teléfono de compartir · SECUNDARIO: el microondas detrás · ANOTACIÓN: compartir · PASO: fin"
+  ],
+  "caption": "¿Por qué gira el plato del microondas? 🍫 Y cómo medir la velocidad de la luz con una tableta de chocolate. ¿Qué pregunto mañana? 👇",
+  "hashtags": [
+    "#aprendesencillo",
+    "#microondas",
+    "#ciencia",
+    "#fisica",
+    "#curiosidades",
+    "#fyp"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "tren-alcance-urda",
+  "look": "Tono sobrio. mundo('dia') con niebla y campo manchego ocre #c8a46a con hileras de olivos verde grisáceo #7d8a52; vía con balasto gris, traviesas, catenaria. AVE: cuerpo blanco #f4f5f7 (plástico, rug. 0,32) con franja morada #6d2a8a; Iryo: rojo #b3122e con franja blanca. Cable LZB entre raíles: cian #2ee6f0 emisivo con pulsos que viajan; se apaga cuando cae. Tramos de bloqueo: franjas verde #3ddc84 / amarillo #ffd23f / rojo #ff4d5e junto a la vía. Acento de anotaciones: blanco y rojo #ff4d5e. Nunca se ve el choque; sin chispas, sin golpes, sin temblor.",
+  "frases": [
+    "¿Cómo puede un tren alcanzar a otro en una línea de *alta velocidad*?",
+    "Es lo que pasó el miércoles cerca de *Urda*, en Toledo: un AVE alcanzó a un Iryo que llevaba unos minutos *parado*.",
+    "Han muerto *más de 60 personas*.",
+    "Un tren a 300 necesita *más de 3 kilómetros* para frenar: no puede ir *a la vista*.",
+    "Por eso la vía se divide en *tramos*, con un solo tren en cada uno.",
+    "En esta línea lo vigila el *LZB*, un cable entre los raíles que habla con el tren.",
+    "Si el de delante está parado, el de detrás *frena solo*.",
+    "Según el ministro de Transportes, sobre las 8:30 el LZB *se cayó* en unos *63 kilómetros*.",
+    "Sin él, los trenes se paran y solo siguen si lo autoriza el *centro de control*.",
+    "Y el centro dejó que el AVE reanudara la marcha con *normalidad*, con el Iryo *delante*.",
+    "Otro maquinista avisó de que no podía ser una marcha normal, y a él le cambiaron la orden. Al AVE, *no*.",
+    "Técnicos y sindicatos piden mirar también los sistemas de *respaldo*. La investigación sigue *abierta*.",
+    "Nuestro recuerdo para las *víctimas* y sus familias."
+  ],
+  "planos": [
+    "CÁMARA alta detrás del AVE, la vía sube por la pantalla hasta el horizonte, inOut todo el plano · HÉROE: el AVE corre por la llanura (lineal) · SECUNDARIO: el Iryo, pequeño y quieto, al fondo · ANOTACIÓN: ninguna · PASO: la cámara avanza hacia el Iryo",
+    "CÁMARA sobre el Iryo, inOut 1,4 s · HÉROE: el Iryo parado · SECUNDARIO: el AVE se acerca al fondo · ANOTACIÓN: etiquetas «Iryo · parado» y «AVE»; tarjeta «Miércoles 28 · Urda (Toledo)» · PASO: la cámara sube",
+    "CÁMARA sube despacio, 2 s; exposición baja a 0,6 · HÉROE: nada se mueve · SECUNDARIO: nada · ANOTACIÓN: ninguna · PASO: corte de sección",
+    "CÁMARA baja detrás del AVE a toda velocidad · HÉROE: flecha desde el morro hasta el horizonte · SECUNDARIO: traviesas pasando · ANOTACIÓN: «más de 3 km para parar» · PASO: la cámara sube a vista aérea",
+    "CÁMARA aérea, inOut 1,4 s · HÉROE: las franjas de los tramos se encienden escalonadas (verde, amarillo, rojo) · SECUNDARIO: un tren en cada tramo · ANOTACIÓN: «libre», «ocupado» · PASO: bajada al raíl",
+    "CÁMARA rasante sobre la vía, inOut 1,2 s · HÉROE: el cable LZB se ilumina con pulsos que viajan · SECUNDARIO: el AVE al fondo · ANOTACIÓN: «cable LZB» con línea guía · PASO: la cámara sigue al AVE",
+    "CÁMARA lateral al AVE · HÉROE: el AVE frena solo y se para antes del tramo rojo (sale 2,4 s) · SECUNDARIO: cifra de velocidad que baja · ANOTACIÓN: cifra «km/h» · PASO: sigue",
+    "CÁMARA rasante · HÉROE: el cable se apaga de golpe y los pulsos paran · SECUNDARIO: tramo oscuro · ANOTACIÓN: cifra «8:30» y etiqueta «LZB caído · 63 km» · PASO: subida a la señal",
+    "CÁMARA junto a la señal en rojo · HÉROE: el AVE detenido ante la señal · SECUNDARIO: nada · ANOTACIÓN: tarjeta «Centro de control · autoriza o no» · PASO: vista aérea",
+    "CÁMARA aérea alta · HÉROE: el AVE reanuda la marcha despacio · SECUNDARIO: el Iryo quieto delante · ANOTACIÓN: tarjeta «Orden al AVE · marcha normal» · PASO: sigue",
+    "CÁMARA aérea · HÉROE: dos tarjetas: «Otro tren · orden corregida ✓» y «AVE · sin corregir ✕» · SECUNDARIO: un tercer tren en la otra vía, despacio · ANOTACIÓN: tarjetas · PASO: la cámara se aleja",
+    "CÁMARA se aleja mucho, la exposición baja · HÉROE: la línea vacía al anochecer · SECUNDARIO: nada · ANOTACIÓN: tarjeta «Investigación abierta» · PASO: sigue",
+    "CÁMARA sube despacio sobre la vía vacía, exposición 0,45 · HÉROE: nada · SECUNDARIO: nada · ANOTACIÓN: ninguna · PASO: fin"
+  ],
+  "caption": "Cómo se evita que dos trenes de alta velocidad choquen, y lo que se sabe del accidente de Urda (Toledo). Datos del Ministerio de Transportes; la investigación sigue abierta. DEP 🕯️",
+  "hashtags": [
+    "#Urda",
+    "#Toledo",
+    "#tren",
+    "#altavelocidad",
+    "#aprendesencillo"
+  ]
+}

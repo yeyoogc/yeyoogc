@@ -1,0 +1,49 @@
+{
+  "id": "agujero-negro",
+  "look": "mundo('espacio') con estrellas. Agujero negro: esfera negra mate (MeshBasic, sin reflejos) de radio 2, disco de acreción emisivo en degradado blanco → #ffb347 → #ff5a1f → transparente, girando más rápido por dentro, y un anillo de luz desviada que mira a cámara. Astronauta: persona traje 'astronauta' cayendo en vertical, de pie, con los pies hacia el agujero (el estirón llena la pantalla vertical). Amigo: segundo astronauta lejos con una nave sencilla (geo.torno + aletas rojas). Acento: naranja #ff9b3d; rojo #ff4d5e solo para lo que aprieta.",
+  "frases": [
+    "Si cayeras en un *agujero negro*, acabarías hecho un *fideo*.",
+    "Y no es una forma de hablar.",
+    "La *gravedad* tira más fuerte cuanto más cerca estás.",
+    "Si caes de pie, tus *pies* están más cerca que tu *cabeza*.",
+    "Así que tira mucho *más fuerte* de tus pies.",
+    "Esa diferencia te *estira* a lo largo y te *aprieta* por los lados.",
+    "Los científicos lo llaman, en serio, *espaguetización*.",
+    "Pero aquí viene lo raro.",
+    "Un amigo que te mire desde lejos *nunca te ve entrar*.",
+    "Te ve ir cada vez *más lento* y cada vez *más rojo*.",
+    "Hasta que te quedas *congelado* en el borde y te apagas.",
+    "Para ti, en cambio, el reloj sigue *normal*.",
+    "En uno *gigante*, como el del centro de la galaxia, cruzas el borde *sin notar nada*.",
+    "Lo malo: una vez dentro, *todos los caminos* llevan al centro.",
+    "Así que sí: fideo. Pero a *cámara lenta* para el resto del universo.",
+    "Compártelo con ese amigo que dice que él *saltaría dentro*."
+  ],
+  "planos": [
+    "CÁMARA de [14 10 5,5] a [12 9 4,5] mirando a [0 5 0], fov 40, inOut todo el plano · HÉROE: el agujero con el disco girando (lineal), abajo · SECUNDARIO: el astronauta, pequeño, cae de pie desde arriba · ANOTACIÓN: ninguna · PASO: acercamiento continuo al astronauta",
+    "CÁMARA a 5,5 a su derecha y 1,8 delante, fov 38, inOut 1,1 s · HÉROE: estirón de aviso de 0,35 (rapido 0,35 s) y vuelve (muelle 0,6 s) en «forma» · SECUNDARIO: temblor 0,3 s · ANOTACIÓN: ninguna · PASO: la cámara se abre",
+    "CÁMARA a [14,5 6,8 2,4] mirando a [0 4,9 0,6], fov 42, inOut 1,3 s · HÉROE: tres flechas hacia abajo a la izquierda del astronauta, más largas cuanto más abajo (0,5 / 1,1 / 2,0), escalonadas 0,35 s · SECUNDARIO: el astronauta sigue cayendo · ANOTACIÓN: «×1», «×4», «×16» · PASO: acercamiento",
+    "CÁMARA a 5,8 a su derecha, fov 36, inOut 1,0 s · HÉROE: etiquetas «pies» y «cabeza» con línea guía · SECUNDARIO: nada · ANOTACIÓN: etiquetas · PASO: sigue el plano",
+    "CÁMARA: igual · HÉROE: flecha de los pies (0,7) mucho más larga que la de la cabeza (0,25) · SECUNDARIO: la de la cabeza entra 0,15 s después · ANOTACIÓN: flechas · PASO: sigue",
+    "CÁMARA a 5,6 de distancia, fov 40, inOut 1,0 s · HÉROE: se estira (escala y ×2,2, ancho ×0,55), pesado 1,2 s, en «estira» · SECUNDARIO: dos flechas rojas que aprietan por los lados en «aprieta» · ANOTACIÓN: flechas · PASO: la cámara retrocede con él",
+    "CÁMARA retrocede a 6,6, pesado 1,4 s · HÉROE: el estirón llega a fideo (y ×3,1) · SECUNDARIO: disco abajo · ANOTACIÓN: sello «ESPAGUETIZACIÓN» en la palabra · PASO: corte de sección con whoosh",
+    "CÁMARA a [30 12 36] mirando a [5 4,6 6], fov 40, inOut 1,4 s · HÉROE: plano general: nave, amigo y agujero · SECUNDARIO: el astronauta vuelve a su forma · ANOTACIÓN: ninguna · PASO: plano desde el amigo",
+    "CÁMARA a [19 8,2 12,5] mirando al agujero, fov 30, inOut 1,2 s · HÉROE: el astronauta, pequeño, sobre el borde · SECUNDARIO: halo del disco · ANOTACIÓN: etiqueta «tú» con línea guía · PASO: empuje lento",
+    "CÁMARA hasta [15 6,5 9,5], fov 24, inOut hasta el final de la frase 10 · HÉROE: se frena (reloj propio con acumulado) y se vuelve rojo en 1,6 s · SECUNDARIO: sus movimientos a cámara lenta · ANOTACIÓN: cifra «N % de velocidad» que baja · PASO: sigue",
+    "CÁMARA: termina el empuje · HÉROE: se queda quieto en el borde y se apaga (entra 0,9 s) · SECUNDARIO: nada · ANOTACIÓN: la cifra llega al 3 % · PASO: corte a primer plano",
+    "CÁMARA a [4,6 5,4 2], fov 34, 0,6 s · HÉROE: el astronauta con sus colores normales · SECUNDARIO: sigue flotando · ANOTACIÓN: cifra-reloj 00:01 → 00:05 a ritmo normal · PASO: corte de sección a escala galáctica",
+    "CÁMARA a [62 22 24] mirando a [0 10 0], fov 44, inOut 1,6 s · HÉROE: el agujero crece ×6 y el astronauta cruza el borde sin estirarse · SECUNDARIO: estrellas · ANOTACIÓN: «tú» y cifra «4 millones de soles» · PASO: de vuelta al tamaño normal",
+    "CÁMARA a [8 2,4 2,5] mirando al centro, fov 46, 1,0 s · HÉROE: 8 flechas curvas que convergen en el centro, escalonadas 0,07 s · SECUNDARIO: el disco por detrás · ANOTACIÓN: flechas · PASO: sigue",
+    "CÁMARA a [11 5,6 3,5] mirando a [0 4,4 0], fov 42, 0,8 s · HÉROE: el astronauta-fideo (y ×3,6) baja lento hacia el agujero · SECUNDARIO: disco · ANOTACIÓN: ninguna · PASO: la cámara se aleja",
+    "CÁMARA a [14 4 6] mirando al agujero, apertura 2,4 (fondo desenfocado), 1,2 s · HÉROE: el móvil con la hoja de compartir · SECUNDARIO: el dedo pulsa Enviar · ANOTACIÓN: ninguna · PASO: fin"
+  ],
+  "caption": "¿Qué te pasa si caes en un agujero negro? 🕳️🍝 Acabas hecho un fideo (en serio). ¿Qué pregunto mañana? 👇",
+  "hashtags": [
+    "#aprendesencillo",
+    "#espacio",
+    "#agujeronegro",
+    "#ciencia",
+    "#curiosidades",
+    "#fyp"
+  ]
+}
