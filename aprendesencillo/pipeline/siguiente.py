@@ -48,7 +48,6 @@ for i in [primero + turno] if turno is not None else range(primero, primero + po
         t = temas[i]
         print(f"{t['id']} | {t['pregunta']} | {t['pista']}")
         print(f"  gancho: {GANCHOS[i % len(GANCHOS)]}")
-        print(f"  cierre: {CIERRES[(i * 3) % len(CIERRES)]}")
     else:
         print("SIN TEMAS: inventa uno nuevo que no esté en temas.json")
 quedan = len(temas) - (primero + por_dia)

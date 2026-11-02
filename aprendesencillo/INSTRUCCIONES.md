@@ -7,7 +7,7 @@ Cada vídeo es una explicación animada **hecha a medida**, en **estilo 3D ilust
 ## Pasos
 
 0. Comprueba que existen `ELEVENLABS_API_KEY` y `TELEGRAM_BOT_TOKEN`. Si falta alguna, para aquí y termina diciendo cuál falta: sin ellas no hay voz buena ni forma de entregar el vídeo. `TELEGRAM_CHAT_ID` es opcional: si no está, `enviar.py` lo descubre solo y le dice a Yeyo cuál es. El esfuerzo recomendado es `medium` (`CLAUDE_CODE_EFFORT_LEVEL`): no hace falta más para este trabajo y gasta mucho menos límite.
-1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), el tipo de gancho y la fórmula de cierre que tocan hoy.
+1. `cd aprendesencillo && python3 pipeline/siguiente.py --turno <N>` → tu tema (`id | pregunta | pista`), y el tipo de gancho que toca hoy.
 2. Mira `referencia/agujero-negro-previa.jpg` (el listón de calidad) y lee `escenas/agujero-negro.js` y `guiones/agujero-negro.json`: son el ejemplo del estilo ilustrado, de la API y de cómo se escriben `look` y `planos` (con números). Si tu tema es un objeto técnico suelto (una cerradura, una caja de cambios), mira también el ejemplo de producto: `referencia/marcha-atras-120-previa.jpg` y `escenas/marcha-atras-120.js`.
 3. **Plano de rodaje antes de programar, con números y no con adjetivos** («premium», «chulo» o «dinámico» no son instrucciones: un número sí). En el propio `guiones/<id>.json` añade:
    - `"look"`: una línea con los materiales del objeto principal (cuál de `mat.*`, color en hex y rugosidad) y **un solo** color de acento para las anotaciones.
@@ -43,7 +43,7 @@ No hagas commits, push ni PRs (el tema sale de la fecha y no hay estado que guar
 - **Explicación paso a paso**: una idea por frase, como máximo 14 palabras. Cada frase es un cambio en pantalla.
 - **Un segundo giro a mitad** (un dato que nadie espera, o "y aquí viene lo bueno") para que no se vayan antes del final.
 - **Remate**: la conclusión en una frase redonda ("Así que sí, está suelto, pero a propósito.").
-- **Cierre para compartir**: la fórmula que imprime `siguiente.py`, con algo concreto y gracioso de este tema (va con `ui.compartir`).
+- **Sin cierre para compartir**: el vídeo acaba en el remate. Nada de «mándaselo a…», «compártelo con…» ni `ui.compartir`; el último plano es el remate con la imagen más fuerte del vídeo.
 - **Duración**: 55-65 s, que con esta voz son 130-150 palabras en 14-17 frases. Español de España, tono de colega.
 - Marca con `*asteriscos*` las palabras clave: salen en blanco y en negrita; el resto, en gris.
 - Escribe los números con cifras ("120", "4.000 rpm").
@@ -108,7 +108,6 @@ No hagas commits, push ni PRs (el tema sale de la fecha y no hay estado que guar
 | `ui.tarjeta({titulo, valor, acento})` | concepto clave en una tarjeta |
 | `ui.sello(texto, {color})` | veredicto que entra de golpe ("NO ENTRA") |
 | `ui.nota(texto)` | aclaración o fuente pequeña, abajo a la izquierda |
-| `ui.compartir({previa, nombres})` | móvil con la hoja de compartir; el dedo pulsa "Enviar" a los 1,5 s. Úsalo en la frase final |
 | `fx.chispas({ancla, t, dur, n})` / `fx.temblor({t, dur, fuerza})` | impactos |
 | `sonido(tipo, t, {vol, dur})` | efecto de sonido extra: `whoosh`, `pop`, `clic`, `golpe`, `chispas`. Ya suenan solos los movimientos de cámara (whoosh), las anotaciones (pop), los sellos y temblores (golpe), las chispas y el móvil de compartir; añade solo lo que falte (una pieza que encaja: `clic`) |
 
